@@ -1,0 +1,218 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security checks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  audit:
+    name: Cargo Audit - Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      
+      - name: Run cargo audit
+        run: cargo audit --deny warnings
+        continue-on-error: false
+      
+      - name: Run cargo audit on phoenix-kernel
+        working-directory: phoenix-kernel
+        run: cargo audit --deny warnings
+        continue-on-error: false
+
+  deny:
+    name: Cargo Deny - Policy Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+      
+      - name: Create deny configuration
+        run: |
+          cat > deny.toml << 'EOF'
+          [advisories]
+          vulnerability = "deny"
+          unmaintained = "warn"
+          unsound = "deny"
+          yanked = "deny"
+          notice = "warn"
+          ignore = []
+
+          [licenses]
+          unlicensed = "deny"
+          allow = [
+            "MIT",
+            "Apache-2.0",
+            "BSD-2-Clause",
+            "BSD-3-Clause",
+            "ISC",
+            "MPL-2.0",
+            "CC0-1.0",
+            "Zlib",
+          ]
+          deny = [
+            "GPL-2.0",
+            "GPL-3.0",
+            "AGPL-3.0",
+          ]
+          copyleft = "deny"
+          allow-osi-fsf-free = "both"
+          default = "deny"
+          confidence-threshold = 0.8
+
+          [bans]
+          multiple-versions = "warn"
+          wildcards = "warn"
+          highlight = "all"
+          workspace-default-features = "allow"
+          external-default-features = "allow"
+          allow = []
+          deny = []
+          skip = []
+          skip-tree = []
+
+          [sources]
+          unknown-registry = "deny"
+          unknown-git = "deny"
+          allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+          allow-git = []
+          EOF
+      
+      - name: Run cargo deny check
+        run: cargo deny check
+      
+      - name: Run cargo deny on phoenix-kernel
+        working-directory: phoenix-kernel
+        run: cargo deny check
+
+  supply-chain:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Check for yanked dependencies
+        run: |
+          cargo update --dry-run 2>&1 | tee output.txt
+          if grep -i "yanked" output.txt; then
+            echo "ERROR: Yanked dependencies detected!"
+            exit 1
+          fi
+      
+      - name: Check for yanked dependencies in phoenix-kernel
+        working-directory: phoenix-kernel
+        run: |
+          cargo update --dry-run 2>&1 | tee output.txt
+          if grep -i "yanked" output.txt; then
+            echo "ERROR: Yanked dependencies detected in phoenix-kernel!"
+            exit 1
+          fi
+
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-license
+        run: cargo install cargo-license
+      
+      - name: Check workspace licenses
+        run: |
+          echo "=== Workspace License Report ==="
+          cargo license --json > licenses.json
+          
+          # Check for GPL/AGPL licenses (strict copyleft)
+          if cargo license --json | jq -r '.[] | select(.license | test("GPL|AGPL")) | .name' | grep -q .; then
+            echo "ERROR: GPL/AGPL licensed dependencies found!"
+            cargo license --json | jq -r '.[] | select(.license | test("GPL|AGPL"))'
+            exit 1
+          fi
+          
+          # Display all licenses
+          cargo license --json | jq -r '.[] | "\(.name): \(.license)"' | sort -u
+      
+      - name: Check phoenix-kernel licenses
+        working-directory: phoenix-kernel
+        run: |
+          echo "=== Phoenix Kernel License Report ==="
+          cargo license --json > licenses.json
+          
+          # Check for GPL/AGPL licenses
+          if cargo license --json | jq -r '.[] | select(.license | test("GPL|AGPL")) | .name' | grep -q .; then
+            echo "ERROR: GPL/AGPL licensed dependencies found in phoenix-kernel!"
+            cargo license --json | jq -r '.[] | select(.license | test("GPL|AGPL"))'
+            exit 1
+          fi
+          
+          # Display all licenses
+          cargo license --json | jq -r '.[] | "\(.name): \(.license)"' | sort -u
+      
+      - name: Upload license reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            licenses.json
+            phoenix-kernel/licenses.json
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [audit, deny, supply-chain, license-compliance]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "Security scan completed"
+          echo "Audit: ${{ needs.audit.result }}"
+          echo "Deny: ${{ needs.deny.result }}"
+          echo "Supply Chain: ${{ needs.supply-chain.result }}"
+          echo "License Compliance: ${{ needs.license-compliance.result }}"
+          
+          if [ "${{ needs.audit.result }}" != "success" ] || \
+             [ "${{ needs.deny.result }}" != "success" ] || \
+             [ "${{ needs.supply-chain.result }}" != "success" ] || \
+             [ "${{ needs.license-compliance.result }}" != "success" ]; then
+            echo "❌ Security checks failed! Review the logs above."
+            exit 1
+          else
+            echo "✅ All security checks passed!"
+          fi

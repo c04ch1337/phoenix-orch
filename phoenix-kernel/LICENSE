@@ -1,0 +1,88 @@
+MIT License
+
+Copyright (c) 2025 Phoenix Project Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ADDITIONAL TERMS AND CONDITIONS FOR AGI DEPLOYMENT
+
+1. ETHICAL REQUIREMENTS
+   Any deployment of this Software as an Artificial General Intelligence (AGI)
+   system must maintain and enforce the core ethical axioms defined in
+   data/axioms.json. These axioms are fundamental to the system's operation
+   and may not be modified or disabled.
+
+2. SAFETY PROTOCOLS
+   Implementers must maintain all safety mechanisms, including but not limited to:
+   - Value Lock system
+   - Catastrophe detection
+   - Emergency shutdown capabilities
+   - Audit logging
+   Disabling or circumventing these mechanisms is expressly prohibited.
+
+3. MONITORING AND OVERSIGHT
+   Any production deployment must implement:
+   - Continuous monitoring of system health
+   - Real-time ethical compliance verification
+   - Regular audits of decision processes
+   - Maintenance of comprehensive audit trails
+
+4. TRANSPARENCY REQUIREMENTS
+   Operators must maintain:
+   - Public documentation of system architecture
+   - Clear disclosure of capabilities and limitations
+   - Accessible audit logs of significant decisions
+   - Regular public reporting on safety metrics
+
+5. PROHIBITED USES
+   This Software may not be used for:
+   - Development of autonomous weapons systems
+   - Mass surveillance without oversight
+   - Manipulation of human behavior
+   - Any purpose intended to cause harm
+
+6. LIABILITY FOR ETHICAL VIOLATIONS
+   While the MIT License disclaims general liability, operators remain
+   responsible for ensuring ethical operation and may be liable for damages
+   resulting from intentional or negligent violation of these terms.
+
+7. MODIFICATION RESTRICTIONS
+   While the Software may be modified under the MIT License, changes that
+   would compromise the core ethical framework, safety systems, or
+   transparency mechanisms are expressly prohibited.
+
+8. DEPLOYMENT REQUIREMENTS
+   Production deployment requires:
+   - Comprehensive safety testing
+   - Ethical review board approval
+   - Implementation of all safety systems
+   - Establishment of oversight mechanisms
+
+9. TERMINATION
+   Rights granted under this license terminate automatically if you fail to
+   comply with these additional terms. Upon termination, you must cease
+   all use and deployment of the Software.
+
+10. SURVIVAL
+    These additional terms survive any termination of the MIT License and
+    continue to apply to any deployment or derivative work.
+
+By using this Software, you agree to both the MIT License and these
+additional terms. These additional terms supplement and do not replace
+any term of the MIT License.

@@ -1,0 +1,74 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  - job_name: 'phoenix-kernel'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'plastic-ltm'
+    static_configs:
+      - targets: ['plastic-ltm:9091']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'triune-conscience'
+    static_configs:
+      - targets: ['triune-conscience:9092']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'world-self-model'
+    static_configs:
+      - targets: ['world-self-model:9093']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'incremental-learner'
+    static_configs:
+      - targets: ['incremental-learner:9094']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'value-lock'
+    static_configs:
+      - targets: ['value-lock:9095']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'perception-fusion'
+    static_configs:
+      - targets: ['perception-fusion:9096']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'phoenix-debug-trace'
+    static_configs:
+      - targets: ['phoenix-debug-trace:9097']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'phoenix-self-heal'
+    static_configs:
+      - targets: ['phoenix-self-heal:9098']
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: '/metrics'
+    scheme: 'http'

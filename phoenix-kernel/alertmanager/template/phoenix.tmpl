@@ -1,0 +1,112 @@
+{{ define "slack.default.title" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+{{ end }}
+
+{{ define "slack.default.text" }}
+{{ if gt (len .Alerts.Firing) 0 }}
+*Alerts Firing:*
+{{ range .Alerts.Firing }}
+• {{ .Labels.severity | toUpper }}: {{ .Annotations.description }}
+  - Started: {{ .StartsAt | since }}
+  - Value: {{ .ValueString }}
+  - Component: {{ .Labels.job }}
+{{ if .Annotations.runbook }}  - Runbook: {{ .Annotations.runbook }}{{ end }}
+{{ end }}
+{{ end }}
+
+{{ if gt (len .Alerts.Resolved) 0 }}
+*Alerts Resolved:*
+{{ range .Alerts.Resolved }}
+• {{ .Labels.severity | toUpper }}: {{ .Annotations.description }}
+  - Resolved: {{ .EndsAt | since }}
+  - Duration: {{ .StartsAt.Sub .EndsAt | duration }}
+  - Component: {{ .Labels.job }}
+{{ end }}
+{{ end }}
+
+*Details:*
+{{ range .CommonLabels.SortedPairs }}• {{ .Name }}: {{ .Value }}
+{{ end }}
+{{ end }}
+
+{{ define "pagerduty.default.description" }}
+[{{ .Status | toUpper }}:{{ .Alerts.Firing | len }}] {{ .CommonLabels.alertname }}
+
+{{ if gt (len .Alerts.Firing) 0 }}
+Alerts Firing:
+{{ range .Alerts.Firing }}
+- {{ .Labels.severity | toUpper }}: {{ .Annotations.description }}
+  Started: {{ .StartsAt | since }}
+  Value: {{ .ValueString }}
+  Component: {{ .Labels.job }}
+{{ if .Annotations.runbook }}  Runbook: {{ .Annotations.runbook }}{{ end }}
+{{ end }}
+{{ end }}
+
+Details:
+{{ range .CommonLabels.SortedPairs }}• {{ .Name }}: {{ .Value }}
+{{ end }}
+{{ end }}
+
+{{ define "email.default.subject" }}
+[{{ .Status | toUpper }}:{{ .Alerts.Firing | len }}] {{ .CommonLabels.alertname }}
+{{ end }}
+
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; }
+    .alert { margin: 10px; padding: 10px; border-radius: 4px; }
+    .firing { background-color: #ffebee; }
+    .resolved { background-color: #e8f5e9; }
+    .severity { font-weight: bold; }
+    .emergency { color: #d32f2f; }
+    .critical { color: #f44336; }
+    .warning { color: #ff9800; }
+  </style>
+</head>
+<body>
+  <h2>Phoenix Alert Notification</h2>
+  
+  {{ if gt (len .Alerts.Firing) 0 }}
+  <h3>Alerts Firing:</h3>
+  {{ range .Alerts.Firing }}
+  <div class="alert firing">
+    <p class="severity {{ .Labels.severity }}">{{ .Labels.severity | toUpper }}</p>
+    <p><strong>{{ .Annotations.description }}</strong></p>
+    <ul>
+      <li>Started: {{ .StartsAt | since }}</li>
+      <li>Value: {{ .ValueString }}</li>
+      <li>Component: {{ .Labels.job }}</li>
+      {{ if .Annotations.runbook }}<li>Runbook: <a href="{{ .Annotations.runbook }}">Link</a></li>{{ end }}
+    </ul>
+  </div>
+  {{ end }}
+  {{ end }}
+
+  {{ if gt (len .Alerts.Resolved) 0 }}
+  <h3>Alerts Resolved:</h3>
+  {{ range .Alerts.Resolved }}
+  <div class="alert resolved">
+    <p class="severity {{ .Labels.severity }}">{{ .Labels.severity | toUpper }}</p>
+    <p><strong>{{ .Annotations.description }}</strong></p>
+    <ul>
+      <li>Resolved: {{ .EndsAt | since }}</li>
+      <li>Duration: {{ .StartsAt.Sub .EndsAt | duration }}</li>
+      <li>Component: {{ .Labels.job }}</li>
+    </ul>
+  </div>
+  {{ end }}
+  {{ end }}
+
+  <h3>Alert Details:</h3>
+  <ul>
+  {{ range .CommonLabels.SortedPairs }}
+    <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+  {{ end }}
+  </ul>
+</body>
+</html>
+{{ end }}

@@ -1,0 +1,149 @@
+# Rust build artifacts
+/target/
+**/target/
+Cargo.lock
+**/*.rs.bk
+
+# Generated documentation
+/doc/
+/docs/
+/target/doc/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Debug and trace files
+*.log
+*.trace
+/logs/
+/traces/
+
+# Runtime data
+/data/memory/*
+!/data/memory/.gitkeep
+/data/backups/*
+!/data/backups/.gitkeep
+/data/mirrors/*
+!/data/mirrors/.gitkeep
+
+# Configuration files with sensitive data
+/config/keys/*
+!/config/keys/.gitkeep
+*.key
+*.pem
+*.crt
+*.p12
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Core dumps and crash logs
+core
+*.core
+crash-*
+
+# Model files and training data
+*.pt
+*.onnx
+*.bin
+*.weights
+/models/*
+!/models/.gitkeep
+
+# Monitoring and metrics
+/prometheus/data/
+/grafana/data/
+*.prom
+
+# Cache directories
+.cache/
+__pycache__/
+*.py[cod]
+
+# Test artifacts
+*.test
+*.prof
+/coverage/
+.coverage
+
+# Dependency directories
+/node_modules/
+/vendor/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build output
+/dist/
+/build/
+*.o
+*.so
+*.dylib
+*.dll
+
+# System files
+.directory
+.Trash-*
+$RECYCLE.BIN/
+System Volume Information/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Memory system files
+*.sled
+*.lsm
+*.merkle
+
+# Value system files
+value_lock.*
+*.axiom
+*.conscience
+
+# Learning system files
+*.lora
+*.ckpt
+*.snapshot
+
+# Perception system files
+*.calibration
+*.sensor
+*.fusion
+
+# Debug trace files
+*.trace
+*.heap
+*.profile
+
+# Self-heal files
+*.recovery
+*.repair
+*.backup
+
+# Plugin files
+/plugins/*
+!/plugins/.gitkeep
+*.plugin
+*.so
+
+# Generated protobuf files
+*.pb.rs
+*.pb.go
+*.pb.h
+*.pb.cc
+
+# Temporary build files
+.cargo-ok

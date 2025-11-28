@@ -1,0 +1,7 @@
+[package]
+name = "lora-rs"
+version = "0.2.0"  # Match version expected by incremental-learner
+edition = "2021"
+
+[dependencies]
+thiserror = "1.0"  # For error handling

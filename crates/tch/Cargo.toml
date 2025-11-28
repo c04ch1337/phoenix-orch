@@ -1,0 +1,9 @@
+[package]
+name = "tch"
+version = "0.13.0"
+edition = "2021"
+
+[dependencies]
+# Pure-Rust stub for the real `tch` crate.
+# This crate provides just enough API surface for the Phoenix kernel
+# to compile in environments without libtorch or native system deps.

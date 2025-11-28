@@ -1,0 +1,284 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  doc-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-git-
+      
+      - name: Check documentation
+        run: cargo doc --workspace --all-features --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+      
+      - name: Check documentation for phoenix-kernel
+        working-directory: phoenix-kernel
+        run: cargo doc --all-features --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
+  doc-coverage:
+    name: Documentation Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+      
+      - name: Install cargo-docset
+        run: |
+          cargo install rustdoc-json || echo "Warning: rustdoc-json installation failed, continuing..."
+        continue-on-error: true
+      
+      - name: Check documentation coverage
+        run: |
+          echo "=== Documentation Coverage Report ==="
+          
+          # Count total items, documented items
+          cargo doc --workspace --all-features --no-deps 2>&1 | tee doc-output.txt
+          
+          # List all public items without docs
+          echo "=== Public items missing documentation ==="
+          cargo rustdoc -- --document-private-items -W missing-docs 2>&1 | tee missing-docs.txt || true
+          
+          echo "Documentation check completed. Review warnings above."
+        continue-on-error: true
+
+  code-coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin
+      
+      - name: Generate code coverage
+        run: cargo tarpaulin --workspace --out xml --out html --output-dir coverage --timeout 300
+        continue-on-error: true
+        timeout-minutes: 30
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/cobertura.xml
+          fail_ci_if_error: false
+        continue-on-error: true
+      
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+        continue-on-error: true
+
+  unused-deps:
+    name: Unused Dependencies Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+      
+      - name: Install cargo-udeps
+        run: cargo install cargo-udeps
+      
+      - name: Check for unused dependencies
+        run: |
+          cargo +nightly udeps --workspace || echo "Warning: Unused dependencies check failed or found issues"
+        continue-on-error: true
+      
+      - name: Check for unused dependencies in phoenix-kernel
+        working-directory: phoenix-kernel
+        run: |
+          cargo +nightly udeps || echo "Warning: Phoenix-kernel unused dependencies check failed or found issues"
+        continue-on-error: true
+
+  code-metrics:
+    name: Code Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install scc (Source Code Counter)
+        run: |
+          # Download and install scc for Linux x86_64
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            SCC_VERSION="3.1.0"
+            wget -q "https://github.com/boyter/scc/releases/download/v${SCC_VERSION}/scc_Linux_x86_64.tar.gz"
+            tar xzf scc_Linux_x86_64.tar.gz
+            chmod +x scc
+            sudo mv scc /usr/local/bin/ || mv scc /usr/local/bin/
+            rm scc_Linux_x86_64.tar.gz
+          else
+            echo "scc installation skipped for $RUNNER_OS"
+            echo "Installing via cargo as fallback..."
+            cargo install sccache || true
+          fi
+      
+      - name: Generate code metrics
+        run: |
+          echo "=== Code Metrics Report ==="
+          scc --by-file --format wide
+          
+          echo ""
+          echo "=== Phoenix Kernel Metrics ==="
+          cd phoenix-kernel
+          scc --by-file --format wide
+
+  benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-git-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bench-target-
+      
+      - name: Run benchmarks
+        run: cargo bench --workspace
+        continue-on-error: true
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: target/criterion/
+        continue-on-error: true
+
+  complexity:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-geiger (unsafe code detector)
+        run: cargo install cargo-geiger
+      
+      - name: Check unsafe code usage
+        run: |
+          echo "=== Unsafe Code Report ==="
+          cargo geiger --all-features || true
+        continue-on-error: true
+      
+      - name: Install tokei (lines of code counter)
+        run: cargo install tokei
+      
+      - name: Generate detailed code statistics
+        run: |
+          echo "=== Detailed Code Statistics ==="
+          tokei .
+          
+          echo ""
+          echo "=== Phoenix Kernel Statistics ==="
+          tokei phoenix-kernel/
+
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [doc-check, doc-coverage, code-coverage, unused-deps, code-metrics, complexity]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "Quality checks completed"
+          echo "Documentation Check: ${{ needs.doc-check.result }}"
+          echo "Documentation Coverage: ${{ needs.doc-coverage.result }}"
+          echo "Code Coverage: ${{ needs.code-coverage.result }}"
+          echo "Unused Dependencies: ${{ needs.unused-deps.result }}"
+          echo "Code Metrics: ${{ needs.code-metrics.result }}"
+          echo "Complexity Analysis: ${{ needs.complexity.result }}"
+          
+          FAILED_JOBS=()
+          if [ "${{ needs.doc-check.result }}" != "success" ]; then
+            FAILED_JOBS+=("Documentation Check")
+          fi
+          if [ "${{ needs.code-metrics.result }}" != "success" ]; then
+            FAILED_JOBS+=("Code Metrics")
+          fi
+          
+          if [ ${#FAILED_JOBS[@]} -gt 0 ]; then
+            echo "❌ Critical quality checks failed: ${FAILED_JOBS[*]}"
+            exit 1
+          else
+            echo "✅ Critical quality checks passed!"
+          fi
