@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "phoenix-kernel",
+    "crates/tch",
+    "crates/lora-rs"
+]
+
+resolver = "2"

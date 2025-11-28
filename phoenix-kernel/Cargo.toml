@@ -1,110 +1,52 @@
-[workspace]
-members = [
-    "phoenix-common",
-    "phoenix-core",
-    "plastic-ltm",
-    "triune-conscience",
-    "world-self-model",
-    "incremental-learner",
-    "value-lock",
-    "perception-fusion",
-    "phoenix-debug-trace",
-    "phoenix-self-heal"
-]
-resolver = "2"
-
-[workspace.package]
-version = "1.0.0"
+[package]
+name = "phoenix-kernel"
+version = "0.1.0"
 edition = "2021"
-authors = ["Phoenix Project Team"]
-description = "Conscience-driven AGI with eternal memory"
-repository = "https://github.com/phoenix-project/phoenix-kernel"
-license = "MIT"
 
-[workspace.dependencies]
-# Core dependencies
-tokio = { version = "1.35", features = ["full"] }
-futures = "0.3"
-async-trait = "0.1"
-thiserror = "1.0"
+[lib]
+name = "phoenix_kernel"
+path = "phoenix-core/src/lib.rs"
+
+[[bin]]
+name = "phoenix-daemon"
+path = "phoenix-core/src/main.rs"
+
+[dependencies]
 anyhow = "1.0"
-# Pin once_cell to a version compatible with both heim-runtime (~1.5)
-# and metrics/ahash (^1.13.1). Version 1.5.2 satisfies all constraints.
-once_cell = "1.5.2"
-
-# Cryptography and security
-ring = "0.17"
-pqcrypto = "0.17"
-sha3 = "0.10"
-
-# Storage and persistence
-sled = "0.34"
-rocksdb = "0.21"
-
-# Machine learning
-tch = "0.13"  # PyTorch bindings
-tokenizers = "0.15"
-
-# Neural network optimization
-onnxruntime = "0.0.14"
-tract-onnx = "0.20"
-# NOTE: lora-rs is provided by an internal stub crate under crates/lora-rs
-# and patched in [patch.crates-io] below to avoid relying on a non-existent
-# or yanked external crate while preserving a clean API surface.
-lora-rs = "0.2"
-
-# Monitoring and metrics
-prometheus = "0.13"
-opentelemetry = { version = "0.20", features = ["rt-tokio"] }
-tracing = "0.1"
-tracing-subscriber = "0.3"
-
-# Web and networking
-axum = "0.7"
-hyper = "1.0"
-tower = "0.4"
-tonic = "0.10"
-
-# Serialization
+chrono = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-protobuf = "3.3"
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+warp = "0.3"
+thiserror = "1.0"
+toml = "0.8"
+prometheus = "0.13"
 
-# Perception and sensors
-image = "0.24"
-# NOTE: System-level perception dependencies (opencv/cpal/gpsd) have been
-# removed for the pure-Rust resurrection profile. The perception-fusion
-# crate now uses internal mock sensors instead of native device bindings.
+# Optional Linux-specific dependencies
+[target.'cfg(target_os = "linux")'.dependencies]
+procfs = "0.15"
 
-# Testing
-proptest = "1.4"
-mockall = "0.12"
-test-log = "0.2"
+# Windows-specific dependencies
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.48", features = [
+    "Win32_System_Console",
+    "Win32_System_Threading",
+    "Win32_System_Performance",
+    "Win32_Foundation"
+]}
+sysinfo = "0.29"
 
-[patch.crates-io]
-# Route all lora-rs usage to our internal stub implementation.
-lora-rs = { path = "../crates/lora-rs" }
-# Route all `tch` usages to the internal pure-Rust stub crate under
-# `crates/tch` to avoid pulling in libtorch, zstd, and other native deps.
-tch = { path = "../crates/tch" }
+# Component crates
+incremental-learner = { path = "incremental-learner" }
+perception-fusion = { path = "perception-fusion" }
+phoenix-debug-trace = { path = "phoenix-debug-trace" }
+phoenix-self-heal = { path = "phoenix-self-heal" }
+plastic-ltm = { path = "plastic-ltm" }
+triune-conscience = { path = "triune-conscience" }
+value-lock = { path = "value-lock" }
+world-self-model = { path = "world-self-model" }
 
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
-debug = false
-
-[profile.production]
-inherits = "release"
-opt-level = 3
-debug-assertions = false
-overflow-checks = false
-
-[workspace.metadata]
-# Forward-looking dependency policy for CI (e.g. cargo-deny)
-# CI is expected to enforce:
-# - No yanked dependencies
-# - No known-vulnerable crates
-# - No unsound or unmaintained critical dependencies
-deny = ["yanked", "unsound", "vulnerable-code"]
+[dev-dependencies]
+tokio-test = "0.4"

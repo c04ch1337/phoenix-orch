@@ -158,10 +158,9 @@ pub enum EventType {
 }
 
 /// Trace subscriber interface
-#[async_trait::async_trait]
 pub trait TraceSubscriber: Send + Sync {
     /// Handle a trace event
-    async fn handle_event(&self, event: TraceEvent) -> PhoenixResult<()>;
+    fn handle_event(&self, event: TraceEvent) -> std::pin::Pin<Box<dyn std::future::Future<Output = PhoenixResult<()>> + Send + '_>>;
 }
 
 impl DebugTrace {
@@ -225,10 +224,12 @@ impl DebugTrace {
         history.push(event.clone());
 
         // Notify subscribers
-        let subscribers = self.subscribers.read().await;
-        for subscriber in subscribers.iter() {
-            subscriber.handle_event(event.clone()).await?;
-        }
+        {
+            let subscribers = self.subscribers.read().await;
+            for subscriber in subscribers.iter() {
+                subscriber.handle_event(event.clone()).await?;
+            }
+        } // subscribers is dropped here
 
         Ok(())
     }
@@ -279,26 +280,29 @@ impl FileSubscriber {
     }
 }
 
-#[async_trait::async_trait]
 impl TraceSubscriber for FileSubscriber {
-    async fn handle_event(&self, event: TraceEvent) -> PhoenixResult<()> {
-        let seconds = match event.timestamp.duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(d) => d.as_secs(),
-            Err(_) => 0,
-        };
+    fn handle_event(&self, event: TraceEvent) -> std::pin::Pin<Box<dyn std::future::Future<Output = PhoenixResult<()>> + Send + '_>> {
+        let path = self.path.clone();
+        let event = event.clone();
+        Box::pin(async move {
+            let seconds = match event.timestamp.duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(d) => d.as_secs(),
+                Err(_) => 0,
+            };
 
-        let output = format!("[{}] {} - {}\n", seconds, event.level, event.message,);
+            let output = format!("[{}] {} - {}\n", seconds, event.level, event.message);
 
-        if let Ok(mut file) = tokio::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&self.path)
-            .await
+            if let Ok(mut file) = tokio::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+                .await
         {
             let _ = file.write_all(output.as_bytes()).await;
         }
 
-        Ok(())
+            Ok(())
+        })
     }
 }
 

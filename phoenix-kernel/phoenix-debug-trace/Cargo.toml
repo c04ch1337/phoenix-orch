@@ -2,71 +2,31 @@
 name = "phoenix-debug-trace"
 version = "1.0.0"
 edition = "2021"
-authors = ["Phoenix Project Team"]
-description = "Real-time debugging and tracing system for the Phoenix AGI Kernel"
-license = "MIT"
 
 [dependencies]
-# Phoenix dependencies
-phoenix-common = { path = "../phoenix-common" }
-
-# Async runtime
-tokio = { version = "1.35", features = ["full"] }
-futures = "0.3"
-async-trait = "0.1"
-
-# Tracing and monitoring
-tracing = { version = "0.1", features = ["attributes"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing-appender = "0.2"
-tracing-opentelemetry = "0.20"
-opentelemetry = { version = "0.20", features = ["rt-tokio", "metrics"] }
-opentelemetry-jaeger = { version = "0.19", features = ["rt-tokio"] }
-opentelemetry-otlp = "0.13"
-
-# Metrics
-prometheus = "0.13"
-metrics = "0.21"
-metrics-exporter-prometheus = "0.12"
-
-# Error handling
-thiserror = "1.0"
 anyhow = "1.0"
-
-# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-# Utilities
-parking_lot = "0.12"
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1.6", features = ["v4", "serde"] }
+async-trait = "0.1"
+phoenix-common = { path = "../phoenix-common" }
 
-[dev-dependencies]
-tokio-test = "0.4"
-proptest = "1.4"
-test-log = "0.2"
-pretty_assertions = "1.4"
-tempfile = "3.8"
+# Platform-specific monitoring
+[target.'cfg(target_os = "linux")'.dependencies]
+procfs = { version = "0.15", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+sysinfo = "0.29"
+windows = { version = "0.48", features = [
+    "Win32_System_Diagnostics_Debug",
+    "Win32_Foundation"
+]}
 
 [features]
 default = []
+linux-debug = ["procfs"]
 
-# Enable distributed tracing
-distributed = ["opentelemetry/trace"]
-
-# Enable metrics collection
-metrics = ["opentelemetry/metrics"]
-
-# Enable debug symbols
-debug = []
-
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
-[package.metadata.phoenix]
-component-type = "debug"
-safety-critical = true
-requires-audit = true
-performance-impact = "low"
+[dev-dependencies]
+tokio-test = "0.4"

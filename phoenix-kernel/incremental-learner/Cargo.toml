@@ -21,7 +21,7 @@ async-trait = "0.1"
 # Machine learning
 # NOTE: `tch` is patched in the workspace to a pure-Rust stub under `crates/tch`.
 # We do not request any libtorch-related features in the resurrection profile.
-tch = "0.13"
+tch = { path = "../../crates/tch", default-features = false }
 # Previous revisions also pulled in the Burn stack (`burn`, `burn-autodiff`,
 # `burn-tensor`, `burn-tch`) alongside direct `tch` usage, which created
 # `torch-sys` conflicts. Those dependencies remain removed.

@@ -19,7 +19,7 @@ async-trait = "0.1"
 # Machine learning
 # NOTE: `tch` is routed to an internal pure-Rust stub via [patch.crates-io]
 # in the workspace manifest. We do not enable any libtorch-related features.
-tch = "0.13"
+tch = { path = "../../crates/tch", default-features = false }
 # Experimental tokenizer/HTM integrations are disabled in the resurrection
 # profile; the current model implementation uses only simple Rust types.
 

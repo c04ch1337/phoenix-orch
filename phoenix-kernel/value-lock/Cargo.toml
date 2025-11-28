@@ -2,77 +2,27 @@
 name = "value-lock"
 version = "1.0.0"
 edition = "2021"
-authors = ["Phoenix Project Team"]
-description = "Value Lock and Catastrophe Detector for the Phoenix AGI Kernel"
-license = "MIT"
 
 [dependencies]
-# Phoenix dependencies
-phoenix-common = { path = "../phoenix-common" }
-plastic-ltm = { path = "../plastic-ltm" }
-world-self-model = { path = "../world-self-model" }
-
-# Async runtime
-tokio = { version = "1.35", features = ["full"] }
-futures = "0.3"
-async-trait = "0.1"
-
-# Cryptography
-ring = "0.17"
-pqcrypto = "0.17"
-sha3 = "0.10"
-ed25519-dalek = "2.0"
-x25519-dalek = "2.0"
-chacha20poly1305 = "0.10"
-# NOTE: Previous versions used an external `merkle_tree` crate here, but
-# Merkle-style integrity is now handled via internal types in `phoenix-common`
-# and explicit verification logic in the memory layer. The external crate has
-# been removed to avoid yanked transitive dependencies.
-
-# Error handling
-thiserror = "1.0"
 anyhow = "1.0"
-
-# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-bincode = "1.3"
-
-# Metrics and monitoring
-prometheus = "0.13"
-opentelemetry = { version = "0.20", features = ["rt-tokio"] }
+tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
-tracing-subscriber = "0.3"
 
-# Utilities
-parking_lot = "0.12"
-rand = "0.8"
-chrono = { version = "0.4", features = ["serde"] }
+# Crypto dependencies
+ed25519-dalek = { version = "2.0", features = ["rand_core"] }
+subtle = "2.4.1"
+digest = "0.10.6"
+curve25519-dalek = "4.1"
+ring = "0.17"
+pqcrypto = "0.17"
+pqcrypto-traits = "0.3"
+pqcrypto-dilithium = "0.5.0"
+
+# Internal dependencies
+phoenix-common = { path = "../phoenix-common" }
+plastic-ltm = { path = "../plastic-ltm" }
 
 [dev-dependencies]
 tokio-test = "0.4"
-proptest = "1.4"
-test-log = "0.2"
-pretty_assertions = "1.4"
-
-[features]
-default = []
-
-# Enable hardware security module support
-hsm = []
-
-# Enable additional cryptographic protections
-paranoid = []
-
-# Enable external value verification
-external-verification = []
-
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
-[package.metadata.phoenix]
-component-type = "safety"
-safety-critical = true
-requires-audit = true
-requires-hsm = true

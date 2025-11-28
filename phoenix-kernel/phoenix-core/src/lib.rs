@@ -12,8 +12,21 @@ pub mod api;
 pub mod config;
 pub mod core;
 pub mod error;
+
+#[cfg(target_os = "windows")]
+pub mod metrics_windows;
+#[cfg(target_os = "windows")]
+pub use metrics_windows as metrics;
+#[cfg(not(target_os = "windows"))]
 pub mod metrics;
+
+#[cfg(target_os = "windows")]
+pub mod signals_windows;
+#[cfg(target_os = "windows")]
+pub use signals_windows as signals;
+#[cfg(not(target_os = "windows"))]
 pub mod signals;
+
 pub mod system;
 
 // Re-export key components
@@ -64,7 +77,7 @@ impl PhoenixKernel {
     }
 
     /// Start the kernel in daemon mode
-    pub async fn start_daemon(&self, _data_dir: std::path::PathBuf) -> Result<()> {
+    pub async fn start_daemon(&self, data_dir: std::path::PathBuf) -> Result<()> {
         info!("Starting Phoenix AGI Kernel in daemon mode");
 
         // Initialize metrics
