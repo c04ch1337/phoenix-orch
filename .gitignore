@@ -3,6 +3,15 @@
 **/target/
 Cargo.lock
 
+# Build artifacts and large files
+*.pdb
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.exe
+
 # IDE files
 .vscode/
 .idea/
@@ -38,3 +47,6 @@ coverage/
 *.swp
 *.swo
 *~
+
+# ONNX Runtime artifacts
+**/onnxruntime*/
