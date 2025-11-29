@@ -50,3 +50,13 @@ coverage/
 
 # ONNX Runtime artifacts
 **/onnxruntime*/
+
+# Database and runtime data files (should not be versioned)
+**/data/memory/**
+**/data/backups/**
+**/data/mirrors/**
+*.sled
+*.lsm
+*.merkle
+# Keep data directory structure but ignore contents
+!**/data/**/.gitkeep
