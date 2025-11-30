@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+// Next.js router removed - using Vite file-based routing
+// TODO: Replace with Leptos Router when migrated
 
 export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // TODO: Implement routing with Vite or Leptos Router
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const [error, setError] = useState('');
   
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,7 +22,9 @@ export default function LoginPage() {
         
         // Redirect to the originally requested page or default to home
         const from = searchParams.get('from') || '/';
-        router.push(from);
+        if (typeof window !== 'undefined') {
+          window.location.href = from;
+        }
       } else {
         setError('Invalid authentication code');
       }

@@ -26,13 +26,8 @@ export enum GoalStatus {
   Completed = 'completed'
 }
 
-export interface WebSocketMessage {
-  type: string;
-  data?: any;
-  timestamp: string;
-  engagementId?: string;
-  agentId?: string;
-}
+// WebSocketMessage removed - using SSE only
+// Messages now come via SSE streams
 
 export interface Engagement {
   id: string;

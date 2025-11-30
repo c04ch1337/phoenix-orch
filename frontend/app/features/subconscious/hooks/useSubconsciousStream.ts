@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 
 export interface SubconsciousEvent {
   timestamp: string;
-  active_loop: string;
+  loop_name: string;  // Changed from active_loop to match backend
   tick_count: number;
   last_thought: string;
   metrics: {
-    cpu_usage: number;
-    memory_mb: number;
+    [key: string]: number;  // Changed to support dynamic metrics
   };
 }
 

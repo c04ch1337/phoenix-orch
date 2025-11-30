@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
-import { socket } from '@/services/socket';
+// WebSocket removed - using SSE only
 import { telemetry } from '@/services/telemetry';
 import { agent } from '@/services/agent';
 import { voice } from '@/services/voice';
@@ -48,18 +48,26 @@ export default function ServiceInitializer({
   }, [voiceEnabled]);
 
   useEffect(() => {
-    // Initialize WebSocket and SSE connections
-    console.log('🔥 Initializing WebSocket connection...');
-    socket.connect();
+    // Initialize SSE connections only
+    console.log('🔥 Initializing SSE connections...');
     telemetry.connect();
     
-    // Log connection status
-    const statusUnsubscribe = socket.onStatusChange((connected) => {
-      console.log('🔥 WebSocket status:', connected ? 'CONNECTED' : 'DISCONNECTED');
-      if (onConnectionChange) {
-        onConnectionChange(connected);
+    // Check backend connection via health endpoint
+    const checkConnection = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/health');
+        const connected = response.ok;
+        if (onConnectionChange) {
+          onConnectionChange(connected);
+        }
+      } catch {
+        if (onConnectionChange) {
+          onConnectionChange(false);
+        }
       }
-    });
+    };
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000);
 
     // Subscribe to voice status changes
     const voiceUnsubscribe = voice.onStatusChange((status) => {
@@ -75,9 +83,8 @@ export default function ServiceInitializer({
 
     // Cleanup on unmount
     return () => {
-      statusUnsubscribe();
+      clearInterval(interval);
       voiceUnsubscribe();
-      socket.disconnect();
       telemetry.disconnect();
       window.removeEventListener('toggle-voice', handleToggleVoice);
       window.removeEventListener('toggle-listening', handleToggleListening);

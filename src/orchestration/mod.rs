@@ -1,4 +1,7 @@
-use crate::context_engineering::{PhoenixContext, EmberShadowView, CipherShadowView};
+use crate::context_engineering::{
+    PhoenixContext, EmberShadowView, CipherShadowView, 
+    PhoenixSubconscious, SubconsciousEvent
+};
 use tokio::sync::RwLock;
 use std::sync::Arc;
 use chrono::Local;
@@ -6,7 +9,7 @@ use anyhow::Result;
 
 pub struct Orchestrator {
     context: Arc<RwLock<PhoenixContext>>,
-    subconscious: Arc<PhoenixSubconscious>,
+    subconscious: Arc<tokio::sync::RwLock<PhoenixSubconscious>>,
 }
 
 impl Orchestrator {
@@ -29,9 +32,30 @@ impl Orchestrator {
             soul_signature: "Phoenix Marie ORCH-0".to_string(),
         }));
 
-        let subconscious = Arc::new(PhoenixSubconscious::new(context.clone()));
+        let subconscious = Arc::new(tokio::sync::RwLock::new(
+            PhoenixSubconscious::new(context.clone())
+        ));
 
         Self { context, subconscious }
+    }
+    
+    /// Connect the subconscious to the API state's broadcast channel and start all loops
+    pub async fn connect_subconscious_to_api(
+        &self,
+        broadcaster: Arc<tokio::sync::broadcast::Sender<SubconsciousEvent>>,
+    ) -> Result<()> {
+        let mut subconscious = self.subconscious.write().await;
+        subconscious.set_event_broadcaster(broadcaster);
+        drop(subconscious);
+        
+        // Start all 7 eternal loops
+        let subconscious = Arc::clone(&self.subconscious);
+        tokio::spawn(async move {
+            let subconscious = subconscious.read().await;
+            subconscious.start_eternal_loops().await;
+        });
+        
+        Ok(())
     }
 
     pub async fn delegate_to_ember(&self, task: Task) -> Result<()> {

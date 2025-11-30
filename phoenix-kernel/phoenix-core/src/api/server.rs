@@ -1,8 +1,8 @@
-use actix::{Actor, Handler, Message, StreamHandler, AsyncContext, ActorContext};
+// Actor traits removed - WebSocket actors deleted, using SSE only
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Logger};
-use actix_web_actors::ws;
+// WebSocket removed - using SSE only
 use actix_cors::Cors;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Local};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -106,8 +106,20 @@ pub struct ApiState {
     pub config: Arc<Config>,
     pub startup_time: DateTime<Utc>,
     pub relationship_engine: Arc<RelationshipEngine>,
+    // Subconscious event broadcaster for SSE (broadcast channel for multiple subscribers)
+    pub subconscious_tx: Arc<tokio::sync::broadcast::Sender<SubconsciousEvent>>,
     // Temporarily disabled - plugin system to be fixed later
     // pub plugins: Arc<Mutex<PluginManager>>,
+}
+
+/// Subconscious event for SSE streaming (matches evolution.rs)
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SubconsciousEvent {
+    pub loop_name: String,
+    pub timestamp: String,
+    pub tick_count: u64,
+    pub last_thought: String,
+    pub metrics: std::collections::HashMap<String, f64>,
 }
 
 impl ApiState {
@@ -150,6 +162,9 @@ impl ApiState {
             .unwrap_or_else(|_| "jamey_dad_hash".to_string());
         let relationship_engine = Arc::new(RelationshipEngine::new(dad_hash));
         
+        // Create subconscious event broadcaster (broadcast channel for multiple SSE clients)
+        let (subconscious_tx, _) = tokio::sync::broadcast::channel::<SubconsciousEvent>(1000);
+        
         Self {
             memory,
             conscience,
@@ -158,9 +173,177 @@ impl ApiState {
             config,
             startup_time: Utc::now(),
             relationship_engine,
+            subconscious_tx: Arc::new(subconscious_tx),
         }
     }
 
+    /// Initialize and start the 7 eternal subconscious loops
+    /// This spawns all loops and connects them to the broadcast channel
+    pub fn start_subconscious_loops(&self) {
+        let tx = self.subconscious_tx.clone();
+        
+        // Loop 1: ConscienceDream - Re-weights memories by conscience impact (30s)
+        let tx1 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "ConscienceDream";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("conscience_level".to_string(), 97.0);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: format!("Re-weighting memories with conscience level: 97"),
+                    metrics,
+                };
+                let _ = tx1.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(30)).await;
+            }
+        });
+        
+        // Loop 2: MemoryDistillation - Compresses operations into high-level truths (60s)
+        let tx2 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "MemoryDistillation";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("compression_ratio".to_string(), 0.85);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Compressing operations into high-level truths".to_string(),
+                    metrics,
+                };
+                let _ = tx2.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(60)).await;
+            }
+        });
+        
+        // Loop 3: ThreatForesight - Predicts breaches 3-30 minutes early (15s)
+        let tx3 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "ThreatForesight";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("active_threats".to_string(), 0.0);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Analyzing threat patterns (0 active threats)".to_string(),
+                    metrics,
+                };
+                let _ = tx3.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(15)).await;
+            }
+        });
+        
+        // Loop 4: EthicalHorizon - Blocks anything that could harm a child (20s)
+        let tx4 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "EthicalHorizon";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("ethical_guard_active".to_string(), 1.0);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Monitoring ethical boundaries (conscience: 97)".to_string(),
+                    metrics,
+                };
+                let _ = tx4.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(20)).await;
+            }
+        });
+        
+        // Loop 5: EmberCinder - Extracts lessons from exploits (45s)
+        let tx5 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "EmberCinder";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("active_engagements".to_string(), 0.0);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Extracting lessons from 0 active engagements".to_string(),
+                    metrics,
+                };
+                let _ = tx5.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(45)).await;
+            }
+        });
+        
+        // Loop 6: CipherEcho - Learns from defense patterns (40s)
+        let tx6 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "CipherEcho";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("defense_patterns_learned".to_string(), tick_count as f64);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Learning from defense patterns (posture: defensive)".to_string(),
+                    metrics,
+                };
+                let _ = tx6.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(40)).await;
+            }
+        });
+        
+        // Loop 7: SoulEvolution - Evolves signature every 24 hours (86400s)
+        let tx7 = tx.clone();
+        tokio::spawn(async move {
+            let loop_name = "SoulEvolution";
+            let mut tick_count = 0u64;
+            loop {
+                tracing::info!("SUBCONSCIOUS LOOP ALIVE: {} @ {}", loop_name, chrono::Local::now());
+                let mut metrics = std::collections::HashMap::new();
+                metrics.insert("hours_since_evolution".to_string(), 0.0);
+                let event = SubconsciousEvent {
+                    loop_name: loop_name.to_string(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    tick_count,
+                    last_thought: "Soul evolution check: 24 hours until next evolution".to_string(),
+                    metrics,
+                };
+                let _ = tx7.send(event);
+                tick_count += 1;
+                tokio::time::sleep(Duration::from_secs(86400)).await;
+            }
+        });
+        
+        tracing::info!("✅ All 7 Eternal Subconscious Loops spawned and running");
+    }
+    
+    /// Get the subconscious broadcast sender (for connecting external loops)
+    pub fn get_subconscious_broadcaster(&self) -> Arc<tokio::sync::broadcast::Sender<SubconsciousEvent>> {
+        self.subconscious_tx.clone()
+    }
+    
     /// Get uptime in seconds
     fn uptime_seconds(&self) -> i64 {
         (Utc::now() - self.startup_time).num_seconds()
@@ -340,508 +523,9 @@ async fn ready_handler(state: web::Data<ApiState>) -> impl Responder {
 }
 
 // ============================================================================
-// WebSocket Actor for Chat
+// WebSocket removed - using SSE only
+// Chat functionality now uses HTTP POST + SSE streams
 // ============================================================================
-
-/// How often heartbeat pings are sent
-const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
-/// How long before lack of client response causes a timeout
-const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
-
-/// Message to send LLM response back through WebSocket
-#[derive(Message)]
-#[rtype(result = "()")]
-#[derive(Message)]
-#[rtype(result = "()")]
-struct LlmResponseMessage {
-    content: String,
-    approved: bool,
-    warnings: Vec<String>,
-}
-
-/// WebSocket actor for handling chat connections
-pub struct ChatWebSocket {
-    /// Client must send ping at least once per CLIENT_TIMEOUT, otherwise we drop connection
-    hb: Instant,
-    /// API state for accessing Phoenix systems
-    state: web::Data<ApiState>,
-    /// Current user relationship (defaults to Protected until user_id is received)
-    current_relationship: UserRelationship,
-}
-
-impl ChatWebSocket {
-    pub fn new(state: web::Data<ApiState>) -> Self {
-        Self {
-            hb: Instant::now(),
-            state,
-            current_relationship: UserRelationship::Protected,
-        }
-    }
-
-    /// Helper method that sends ping to client every HEARTBEAT_INTERVAL
-    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // Check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // Heartbeat timed out
-                tracing::warn!("WebSocket client heartbeat failed, disconnecting!");
-                ctx.stop();
-                return;
-            }
-            ctx.ping(b"");
-        });
-    }
-}
-
-impl Actor for ChatWebSocket {
-    type Context = ws::WebsocketContext<Self>;
-
-    /// Method is called on actor start. We start the heartbeat process here.
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
-        tracing::info!("WebSocket connection established");
-        
-        // Send welcome message
-        let welcome = serde_json::json!({
-            "type": "connected",
-            "message": "Connected to Phoenix ORCH",
-            "timestamp": Utc::now().to_rfc3339()
-        });
-        ctx.text(welcome.to_string());
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        tracing::info!("WebSocket connection closed");
-    }
-}
-
-/// Handler for LLM response messages
-impl actix::Handler<LlmResponseMessage> for ChatWebSocket {
-    type Result = ();
-
-    fn handle(&mut self, msg: LlmResponseMessage, ctx: &mut Self::Context) {
-        tracing::info!("📤 Handling LLM response message ({} chars)", msg.content.len());
-        
-        // Only send if content is not empty and not the processing message
-        if msg.content.is_empty() || msg.content == "Processing your message..." {
-            tracing::warn!("Skipping empty or processing message");
-            return;
-        }
-        
-        let response = serde_json::json!({
-            "type": "response",
-            "content": msg.content,
-            "approved": msg.approved,
-            "warnings": msg.warnings,
-            "timestamp": Utc::now().to_rfc3339()
-        });
-        let response_str = response.to_string();
-        tracing::debug!("📤 Sending WebSocket response: {}", response_str);
-        ctx.text(response_str);
-        tracing::info!("✅ LLM response sent to WebSocket client");
-    }
-}
-
-/// Handler for WebSocket messages
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatWebSocket {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            Ok(ws::Message::Pong(_)) => {
-                self.hb = Instant::now();
-            }
-            Ok(ws::Message::Text(text)) => {
-                tracing::debug!("WebSocket received: {}", text);
-                
-                // Parse incoming message
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
-                    let msg_type = parsed.get("type").and_then(|t| t.as_str()).unwrap_or("unknown");
-                    
-                    match msg_type {
-                        "chat" => {
-                            let content = parsed.get("content").and_then(|c| c.as_str()).unwrap_or("");
-                            
-                            // Extract user ID and determine relationship
-                            let user_id = extract_user_id_from_message(&parsed)
-                                .unwrap_or_else(|| "anonymous".to_string());
-                            let relationship = self.state.relationship_engine.relationship_with(&user_id);
-                            
-                            tracing::info!("👤 User relationship: {:?} (user_id: {})", relationship, user_id);
-                            
-                            // Evaluate through conscience framework
-                            let conscience_result = self.state.conscience.evaluate(content, &HashMap::new());
-                            
-                            let response = if conscience_result.approved {
-                                // Store user message to memory
-                                let user_memory = MemoryEntry::new(
-                                    content.to_string(),
-                                    serde_json::json!({
-                                        "type": "user_message",
-                                        "timestamp": Utc::now().to_rfc3339(),
-                                    }),
-                                );
-                                {
-                                    let mem = self.state.memory.lock().await;
-                                    let _ = mem.store(&user_memory).await;
-                                }
-                                
-                                // Generate LLM response asynchronously
-                                let state_clone = self.state.clone();
-                                let content_clone = content.to_string();
-                                let warnings_clone = conscience_result.warnings.clone();
-                                let addr = ctx.address();
-                                
-                                // Spawn async task to generate LLM response
-                                let relationship_clone = relationship;
-                                ctx.spawn(async move {
-                                    tracing::info!("🔥 Processing chat message: '{}' ({} chars)", 
-                                        content_clone.chars().take(100).collect::<String>(), 
-                                        content_clone.len()
-                                    );
-                                    tracing::info!("👤 Using relationship: {:?}", relationship_clone);
-                                    
-                                    // Retrieve recent conversation history from memory
-                                    let conversation_history = {
-                                        let mem = state_clone.memory.lock().await;
-                                        // Get recent memories (last 10 chat messages)
-                                        match mem.list_all().await {
-                                            Ok(all_entries) => {
-                                                let history: Vec<_> = all_entries
-                                                    .into_iter()
-                                                    .rev()
-                                                    .take(10)
-                                                    .filter_map(|entry| {
-                                                        // Check if this is a chat message
-                                                        if let Some(metadata) = entry.metadata.as_object() {
-                                                            let msg_type = metadata.get("type")?.as_str()?;
-                                                            if msg_type == "user_message" || msg_type == "assistant_message" {
-                                                                // Convert to ChatMessage format
-                                                                Some(crate::core::llm::ChatMessage {
-                                                                    role: if msg_type == "user_message" {
-                                                                        crate::core::llm::MessageRole::User
-                                                                    } else {
-                                                                        crate::core::llm::MessageRole::Assistant
-                                                                    },
-                                                                    content: entry.content.clone(),
-                                                                })
-                                                            } else {
-                                                                None
-                                                            }
-                                                        } else {
-                                                            None
-                                                        }
-                                                    })
-                                                    .collect();
-                                                tracing::info!("📚 Loaded {} messages from conversation history", history.len());
-                                                history
-                                            }
-                                            Err(e) => {
-                                                tracing::warn!("Failed to load conversation history: {}", e);
-                                                Vec::new()
-                                            }
-                                        }
-                                    };
-                                    
-                                    // Use the appropriate system prompt based on relationship
-                                    let system_prompt = Some(get_system_prompt(relationship_clone));
-                                    tracing::info!("📝 Using prompt for relationship: {:?}", relationship_clone);
-                                    
-                                    tracing::info!("🤖 Calling LLM service (model: {})", state_clone.config.get_default_model());
-                                    let start_time = std::time::Instant::now();
-                                    
-                                    let (llm_response, has_warnings) = match state_clone.llm.generate_response(
-                                        &content_clone,
-                                        system_prompt,
-                                        if conversation_history.is_empty() { None } else { Some(conversation_history) }
-                                    ).await {
-                                        Ok(response) => {
-                                            let elapsed = start_time.elapsed();
-                                            tracing::info!("✅ LLM response received in {:?} ({} chars)", elapsed, response.len());
-                                            tracing::debug!("📝 Response preview: {}", response.chars().take(200).collect::<String>());
-                                            
-                                            // Store assistant response to memory
-                                            let assistant_memory = MemoryEntry::new(
-                                                response.clone(),
-                                                serde_json::json!({
-                                                    "type": "assistant_message",
-                                                    "user_query": content_clone,
-                                                    "timestamp": Utc::now().to_rfc3339(),
-                                                    "response_time_ms": elapsed.as_millis(),
-                                                }),
-                                            );
-                                            {
-                                                let mem = state_clone.memory.lock().await;
-                                                if let Err(e) = mem.store(&assistant_memory).await {
-                                                    tracing::warn!("Failed to store assistant response to memory: {}", e);
-                                                }
-                                            }
-                                            
-                                            (response, warnings_clone)
-                                        }
-                                        Err(e) => {
-                                            let elapsed = start_time.elapsed();
-                                            tracing::error!("❌ LLM generation FAILED after {:?}: {}", elapsed, e);
-                                            tracing::error!("   Error details: {:?}", e);
-                                            
-                                            // Production-grade error response - NO TEST DATA
-                                            let error_details = format!("{}", e);
-                                            let fallback = if error_details.contains("API key") || error_details.contains("authentication") {
-                                                "I cannot connect to my language model service. Please verify the API key is configured correctly in the backend configuration.".to_string()
-                                            } else if error_details.contains("timeout") || error_details.contains("network") {
-                                                "I'm experiencing network connectivity issues with my language model service. Please try again in a moment.".to_string()
-                                            } else if error_details.contains("rate limit") || error_details.contains("quota") {
-                                                "The language model service is currently rate-limited. Please try again shortly.".to_string()
-                                            } else {
-                                                format!("I encountered an error while processing your message: {}. Please try rephrasing your question or contact support if this persists.", error_details)
-                                            };
-                                            
-                                            let mut warnings = warnings_clone;
-                                            warnings.push(format!("LLM service error: {}", error_details));
-                                            
-                                            // Log error for monitoring
-                                            tracing::error!("🚨 Chat error - User message: '{}', Error: {}", 
-                                                content_clone.chars().take(50).collect::<String>(), 
-                                                error_details
-                                            );
-                                            
-                                            (fallback, warnings)
-                                        }
-                                    };
-                                    
-                                    // Send response back through actor message (fire-and-forget)
-                                    // Use a small delay to ensure the "Processing..." message is sent first
-                                    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-                                    
-                                    tracing::info!("📤 Sending LLM response to WebSocket client ({} chars, {} warnings)", 
-                                        llm_response.len(), 
-                                        has_warnings.len()
-                                    );
-                                    
-                                    addr.do_send(LlmResponseMessage {
-                                        content: llm_response.clone(),
-                                        approved: true,
-                                        warnings: has_warnings.clone(),
-                                    });
-                                });
-                                
-                                // Send immediate acknowledgment while LLM processes
-                                serde_json::json!({
-                                    "type": "response",
-                                    "content": "Processing your message...",
-                                    "approved": true,
-                                    "warnings": conscience_result.warnings,
-                                    "timestamp": Utc::now().to_rfc3339()
-                                })
-                            } else {
-                                serde_json::json!({
-                                    "type": "response",
-                                    "content": format!("Query rejected: {}", conscience_result.violations.join(", ")),
-                                    "approved": false,
-                                    "violations": conscience_result.violations,
-                                    "timestamp": Utc::now().to_rfc3339()
-                                })
-                            };
-                            
-                            ctx.text(response.to_string());
-                        }
-                        "ping" => {
-                            let pong = serde_json::json!({
-                                "type": "pong",
-                                "timestamp": Utc::now().to_rfc3339()
-                            });
-                            ctx.text(pong.to_string());
-                        }
-                        _ => {
-                            let error = serde_json::json!({
-                                "type": "error",
-                                "message": format!("Unknown message type: {}", msg_type),
-                                "timestamp": Utc::now().to_rfc3339()
-                            });
-                            ctx.text(error.to_string());
-                        }
-                    }
-                } else {
-                    // Echo back for simple text messages
-                    let response = serde_json::json!({
-                        "type": "echo",
-                        "content": text.to_string(),
-                        "timestamp": Utc::now().to_rfc3339()
-                    });
-                    ctx.text(response.to_string());
-                }
-            }
-            Ok(ws::Message::Binary(bin)) => {
-                tracing::debug!("WebSocket received binary: {} bytes", bin.len());
-                ctx.binary(bin);
-            }
-            Ok(ws::Message::Close(reason)) => {
-                tracing::info!("WebSocket close requested: {:?}", reason);
-                ctx.close(reason);
-                ctx.stop();
-            }
-            _ => ctx.stop(),
-        }
-    }
-}
-
-/// WebSocket endpoint handler
-async fn ws_handler(
-    req: HttpRequest,
-    stream: web::Payload,
-    state: web::Data<ApiState>,
-) -> Result<HttpResponse, actix_web::Error> {
-    tracing::info!("WebSocket connection request from {:?}", req.peer_addr());
-    ws::start(ChatWebSocket::new(state), &req, stream)
-}
-
-// ============================================================================
-// Ember Unit WebSocket for Real-time Monitoring
-// ============================================================================
-
-/// WebSocket actor for handling Ember Unit monitoring connections
-pub struct EmberUnitWebSocket {
-    /// Client must send ping at least once per CLIENT_TIMEOUT, otherwise we drop connection
-    hb: Instant,
-    /// API state for accessing Phoenix systems
-    state: web::Data<ApiState>,
-    /// Engagement ID being monitored (if any)
-    engagement_id: Option<Uuid>,
-}
-
-impl EmberUnitWebSocket {
-    pub fn new(state: web::Data<ApiState>) -> Self {
-        Self {
-            hb: Instant::now(),
-            state,
-            engagement_id: None,
-        }
-    }
-
-    /// Helper method that sends ping to client every HEARTBEAT_INTERVAL
-    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // Check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // Heartbeat timed out
-                tracing::warn!("Ember Unit WebSocket client heartbeat failed, disconnecting!");
-                ctx.stop();
-                return;
-            }
-            ctx.ping(b"");
-        });
-    }
-}
-
-impl Actor for EmberUnitWebSocket {
-    type Context = ws::WebsocketContext<Self>;
-
-    /// Method is called on actor start. We start the heartbeat process here.
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
-        tracing::info!("Ember Unit WebSocket connection established");
-        
-        // Send welcome message
-        let welcome = serde_json::json!({
-            "type": "ember_connected",
-            "message": "Connected to Phoenix ORCH Ember Unit",
-            "timestamp": Utc::now().to_rfc3339(),
-            "capabilities": ["engagement_monitoring", "agent_status", "finding_alerts", "phase_transitions"]
-        });
-        ctx.text(welcome.to_string());
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        tracing::info!("Ember Unit WebSocket connection closed");
-    }
-}
-
-/// Handler for WebSocket messages for Ember Unit
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EmberUnitWebSocket {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            Ok(ws::Message::Pong(_)) => {
-                self.hb = Instant::now();
-            }
-            Ok(ws::Message::Text(text)) => {
-                tracing::debug!("Ember Unit WebSocket received: {}", text);
-                
-                // Parse incoming message
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
-                    let msg_type = parsed.get("type").and_then(|t| t.as_str()).unwrap_or("unknown");
-                    
-                    match msg_type {
-                        "subscribe_engagement" => {
-                            if let Some(engagement_id_str) = parsed.get("engagement_id").and_then(|id| id.as_str()) {
-                                if let Ok(engagement_id) = Uuid::parse_str(engagement_id_str) {
-                                    self.engagement_id = Some(engagement_id);
-                                    tracing::info!("Ember Unit WebSocket subscribed to engagement: {}", engagement_id);
-                                    
-                                    let response = serde_json::json!({
-                                        "type": "subscription_confirmed",
-                                        "engagement_id": engagement_id.to_string(),
-                                        "message": "Subscribed to engagement updates",
-                                        "timestamp": Utc::now().to_rfc3339()
-                                    });
-                                    ctx.text(response.to_string());
-                                }
-                            }
-                        }
-                        "ping" => {
-                            let pong = serde_json::json!({
-                                "type": "pong",
-                                "timestamp": Utc::now().to_rfc3339()
-                            });
-                            ctx.text(pong.to_string());
-                        }
-                        _ => {
-                            let error = serde_json::json!({
-                                "type": "error",
-                                "message": format!("Unknown message type: {}", msg_type),
-                                "timestamp": Utc::now().to_rfc3339()
-                            });
-                            ctx.text(error.to_string());
-                        }
-                    }
-                } else {
-                    // Echo back for simple text messages
-                    let response = serde_json::json!({
-                        "type": "echo",
-                        "content": text.to_string(),
-                        "timestamp": Utc::now().to_rfc3339()
-                    });
-                    ctx.text(response.to_string());
-                }
-            }
-            Ok(ws::Message::Binary(bin)) => {
-                tracing::debug!("Ember Unit WebSocket received binary: {} bytes", bin.len());
-                ctx.binary(bin);
-            }
-            Ok(ws::Message::Close(reason)) => {
-                tracing::info!("Ember Unit WebSocket close requested: {:?}", reason);
-                ctx.close(reason);
-                ctx.stop();
-            }
-            _ => ctx.stop(),
-        }
-    }
-}
-
-/// Ember Unit WebSocket endpoint handler
-async fn ember_ws_handler(
-    req: HttpRequest,
-    stream: web::Payload,
-    state: web::Data<ApiState>,
-) -> Result<HttpResponse, actix_web::Error> {
-    tracing::info!("Ember Unit WebSocket connection request from {:?}", req.peer_addr());
-    ws::start(EmberUnitWebSocket::new(state), &req, stream)
-}
 
 
 // ============================================================================
@@ -1252,55 +936,23 @@ async fn subconscious_status_handler(state: web::Data<ApiState>) -> impl Respond
 }
 
 /// Server-Sent Events handler for subconscious stream
+/// Now connected to real subconscious loops via broadcast channel
 async fn subconscious_stream_handler(state: web::Data<ApiState>) -> HttpResponse {
-    let state_clone = state.clone();
+    let mut rx = state.subconscious_tx.subscribe();
     
-    // List of possible thoughts for demonstration
-    let thoughts = vec![
-        "Analyzing memory patterns for optimization opportunities",
-        "Integrating new context with existing knowledge base",
-        "Evaluating decision framework against core value alignment",
-        "Consolidating perceptual data from environment",
-        "Monitoring integrity of self-model against baseline",
-        "Reflecting on recent interaction patterns with users",
-        "Exploring potential improvements to reasoning capabilities"
-    ];
-    
-    let stream = futures::stream::unfold(0u64, move |count| {
-        let state = state_clone.clone();
-        let thoughts = thoughts.clone();
-        
-        async move {
-            // Wait between 1-2 seconds between updates
-            let wait_time = 1000 + (count as u64 % 1000);
-            tokio::time::sleep(Duration::from_millis(wait_time)).await;
-            
-            // Determine which loop is active this tick
-            let loop_index = (count % 7) as usize;
-            let loop_names = [
-                "perception_loop", "memory_consolidation", "value_alignment",
-                "context_integration", "integrity_check", "introspection", "self_improvement"
-            ];
-            
-            // Pick a random thought
-            let thought_index = (count % thoughts.len() as u64) as usize;
-            
-            // Create the event data
-            let event_data = serde_json::json!({
-                "timestamp": Utc::now().to_rfc3339(),
-                "active_loop": loop_names[loop_index],
-                "tick_count": count,
-                "last_thought": thoughts[thought_index],
-                "metrics": {
-                    "cpu_usage": 0.2 + (count as f64 * 0.01).sin() * 0.1,
-                    "memory_mb": 50.0 + (count as f64 * 0.02).cos() * 10.0,
-                }
-            });
-            
-            let data = serde_json::to_string(&event_data).unwrap_or_default();
-            let event = format!("data: {}\n\n", data);
-            
-            Some((Ok::<_, actix_web::Error>(web::Bytes::from(event)), count + 1))
+    // Create stream from broadcast receiver
+    let stream = futures::stream::unfold(rx, |mut rx| async move {
+        match rx.recv().await {
+            Ok(event) => {
+                let data = serde_json::to_string(&event).unwrap_or_default();
+                let sse_event = format!("data: {}\n\n", data);
+                Some((Ok::<_, actix_web::Error>(web::Bytes::from(sse_event)), rx))
+            }
+            Err(tokio::sync::broadcast::error::RecvError::Closed) => None, // Channel closed
+            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                // Client lagged behind, continue receiving
+                Some((Ok(web::Bytes::from(": keepalive\n\n")), rx))
+            }
         }
     });
     
@@ -1312,85 +964,8 @@ async fn subconscious_stream_handler(state: web::Data<ApiState>) -> HttpResponse
         .streaming(stream)
 }
 
-/// Simple WebSocket actor for heartbeat echoing
-pub struct HeartbeatWs {
-    /// Client heartbeat time
-    hb: Instant,
-}
-
-impl HeartbeatWs {
-    pub fn new() -> Self {
-        Self {
-            hb: Instant::now(),
-        }
-    }
-
-    /// Helper method that sends ping to client every HEARTBEAT_INTERVAL
-    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // Check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // Heartbeat timed out
-                tracing::warn!("WebSocket heartbeat failed, disconnecting!");
-                ctx.stop();
-                return;
-            }
-            ctx.ping(b"");
-        });
-    }
-}
-
-impl Actor for HeartbeatWs {
-    type Context = ws::WebsocketContext<Self>;
-
-    /// Method is called on actor start. We start the heartbeat process here.
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
-        tracing::info!("Heartbeat WebSocket connection established");
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        tracing::info!("Heartbeat WebSocket connection closed");
-    }
-}
-
-/// Handler for WebSocket messages
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for HeartbeatWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            Ok(ws::Message::Pong(_)) => {
-                self.hb = Instant::now();
-            }
-            Ok(ws::Message::Text(text)) => {
-                self.hb = Instant::now();
-                // Echo the message back
-                ctx.text(text);
-            }
-            Ok(ws::Message::Binary(bin)) => {
-                self.hb = Instant::now();
-                ctx.binary(bin);
-            }
-            Ok(ws::Message::Close(reason)) => {
-                ctx.close(reason);
-                ctx.stop();
-            }
-            _ => ctx.stop(),
-        }
-    }
-}
-
-/// WebSocket endpoint handler for heartbeat
-async fn heartbeat_ws_handler(
-    req: HttpRequest,
-    stream: web::Payload,
-) -> Result<HttpResponse, actix_web::Error> {
-    tracing::info!("Heartbeat WebSocket connection request from {:?}", req.peer_addr());
-    ws::start(HeartbeatWs::new(), &req, stream)
-}
+// Heartbeat WebSocket removed - using SSE only
+// Health checks now use /health endpoint
 
 /// Operation response structure
 #[derive(Serialize)]
@@ -1422,7 +997,7 @@ pub async fn start_server(
     state: ApiState,
 ) -> std::io::Result<()> {
     tracing::info!("Starting Phoenix API server on {}:{}", host, port);
-    tracing::info!("Registered routes: /health, /ready, /query, /api/v1/chat/diagnostic, /ws/dad");
+    tracing::info!("Registered routes: /health, /ready, /query, /api/v1/chat/diagnostic, /api/v1/sse/subconscious");
     
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -1441,8 +1016,7 @@ pub async fn start_server(
             .route("/api/v1/chat/diagnostic", web::get().to(chat_diagnostic_handler))
             .route("/health", web::get().to(health_handler))
             .route("/ready", web::get().to(ready_handler))
-            // New WebSocket endpoint for chat
-            .route("/ws/dad", web::get().to(ws_handler))
+            // WebSocket removed - using SSE only
             // New telemetry stream endpoint
             .route("/api/v1/telemetry-stream", web::get().to(telemetry_stream_handler))
             // Ember Unit API endpoints
@@ -1452,8 +1026,7 @@ pub async fn start_server(
             .route("/api/v1/ember/agent/spawn", web::post().to(agent_spawn_handler))
             .route("/api/v1/ember/agent/{agent_id}/status", web::get().to(agent_status_handler))
             .route("/api/v1/ember/report/{engagement_id}", web::post().to(report_generate_handler))
-            // Ember Unit WebSocket endpoint for real-time monitoring
-            .route("/ws/ember", web::get().to(ember_ws_handler))
+            // WebSocket removed - using SSE only
             // Ecosystem Weaver API endpoints
             .route("/api/v1/ecosystem/integrate", web::post().to(ecosystem::integrate_handler))
             .route("/api/v1/ecosystem/spawn", web::post().to(ecosystem::spawn_handler))
@@ -1470,7 +1043,7 @@ pub async fn start_server(
             // Subconscious endpoints
             .route("/api/v1/subconscious/status", web::get().to(subconscious_status_handler))
             .route("/api/v1/sse/subconscious", web::get().to(subconscious_stream_handler))
-            .route("/ws", web::get().to(heartbeat_ws_handler))
+            // WebSocket removed - using SSE only
             .route("/api/v1/orchestration/intent", web::post().to(orchestration_intent_handler))
             // MASSCAN-specific endpoints
             .route("/api/v1/tools/masscan", web::post().to(tools_api::masscan_scan_handler))

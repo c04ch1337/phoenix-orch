@@ -53,12 +53,7 @@ export default defineConfig({
         secure: false,
         ws: false
       },
-      '/ws': {
-        target: 'ws://127.0.0.1:5001',
-        ws: true,
-        changeOrigin: true,
-        secure: false
-      }
+      // WebSocket proxy removed - using SSE only
     }
   }
 });

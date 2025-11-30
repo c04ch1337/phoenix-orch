@@ -144,6 +144,11 @@ async fn main() -> Result<()> {
         api_config,
     );
     
+    // Start the 7 eternal subconscious loops
+    info!("Starting 7 Eternal Subconscious Loops...");
+    api_state.start_subconscious_loops();
+    info!("✅ Subconscious loops started - expect 7 'SUBCONSCIOUS LOOP ALIVE' messages within 2 minutes");
+    
     // Start API server in background
     let api_state_clone = api_state.clone();
     tokio::spawn(async move {

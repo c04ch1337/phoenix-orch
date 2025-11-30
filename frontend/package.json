@@ -24,8 +24,7 @@
     "lucide-react": "^0.284.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwindcss": "^4.1.17",
-    "zustand": "^5.0.9"
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.3.3",

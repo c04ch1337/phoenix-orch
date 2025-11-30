@@ -8,7 +8,8 @@ import {
     Network,
     Flame
 } from 'lucide-react';
-import { usePhoenixContext, useSubconscious } from '../providers/ZustandProvider';
+// Zustand removed - using PhoenixContext only
+// TODO: Replace with PhoenixContext hook when implemented
 
 /**
  * Optional props that can override context-based defaults
@@ -28,14 +29,12 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
     onRightPanelToggle,
     onOpenConsole
 }: ConscienceGaugeProps) => {
-    // Get values from Zustand store using our custom hooks
-    const phoenix = usePhoenixContext();
-    const subconscious = useSubconscious();
-    
-    // Derive values from context
-    const conscienceStability = phoenix.settings.conscienceLevel * 20; // Scale 0-5 to percentage
-    const isOffline = !phoenix.isConnected;
-    const userName = phoenix.user.name || 'UNKNOWN';
+    // TODO: Replace with PhoenixContext hook when implemented
+    // Temporary defaults until PhoenixContext is created
+    const conscienceStability = 97; // Default conscience level
+    const isOffline = false; // Will be set from PhoenixContext
+    const userName = 'DAD'; // Will be set from PhoenixContext
+    const subconsciousActive = false; // Will be set from PhoenixContext
     
     // Using callback functions from props or defaults
     const handleSidebarToggle = onSidebarToggle || (() => console.log('Toggle sidebar'));
@@ -72,7 +71,7 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
                     <div className={`w-3 h-3 rounded-full ${isOffline ? 'bg-zinc-700' : 'bg-[#E63946]'} animate-pulse`}></div>
                     <div className="font-orbitron tracking-widest text-[10px] text-zinc-400">
                         {isOffline ? 'OFFLINE MODE' : 'PHOENIX ORCH LITE'}
-                        {subconscious.isActive && ' ● SUBCONSCIOUS ACTIVE'}
+                        {subconsciousActive && ' ● SUBCONSCIOUS ACTIVE'}
                     </div>
                     <div className={`w-3 h-3 rounded-full ${isOffline ? 'bg-zinc-700' : 'bg-[#E63946]'} animate-pulse`}></div>
                 </div>

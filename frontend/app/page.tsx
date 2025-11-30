@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Flame, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { socket } from '@/lib/socket';
+// WebSocket removed - using SSE only
 import { telemetry } from '@/services/telemetry';
 import { agent, AgentState } from '@/services/agent';
 import { voice } from '@/services/voice';
@@ -93,26 +93,40 @@ export default function Home() {
             timestamp: Date.now()
         });
         
-        // Send via WebSocket with user_id for relationship detection
-        if (socket.isConnected()) {
-            // TODO: Replace with actual user ID from auth system
-            // For now, use a placeholder - in production, get from auth context
+        // Send via HTTP POST (SSE for responses)
+        setIsTyping(true);
+        try {
             const userId = localStorage.getItem('phoenix_user_id') || 'anonymous';
-            socket.send({
-                type: 'chat',
-                content: content.trim(),
-                user_id: userId
+            const response = await fetch('http://localhost:5001/api/v1/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: content.trim(),
+                    user_id: userId
+                })
             });
-            setIsTyping(true);
-        } else {
-            console.error('🔥 WebSocket not connected, cannot send message');
-            // Add error message
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.response) {
+                    setMessages(prev => [...prev, {
+                        id: `phoenix-${Date.now()}`,
+                        type: 'phoenix',
+                        content: data.response,
+                        timestamp: Date.now()
+                    }]);
+                }
+            }
+        } catch (error) {
+            console.error('🔥 Failed to send message:', error);
             setMessages(prev => [...prev, {
                 id: `error-${Date.now()}`,
                 type: 'phoenix',
                 content: 'Error: Not connected to Phoenix backend. Please check your connection.',
                 timestamp: Date.now()
             }]);
+        } finally {
+            setIsTyping(false);
         }
     }, []);
 
@@ -121,8 +135,7 @@ export default function Home() {
         setIsTyping(true);
         const response = await agent.protect();
         
-        // Also send via WebSocket for backend processing
-        socket.send({ type: 'protect' });
+        // Backend processing via HTTP (SSE for real-time updates)
         
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
@@ -143,8 +156,7 @@ export default function Home() {
         setIsTyping(true);
         const response = await agent.kill(target);
         
-        // Also send via WebSocket for backend processing
-        socket.send({ type: 'kill', target });
+        // Backend processing via HTTP (SSE for real-time updates)
         
         setMessages(prev => [...prev, {
             id: Date.now().toString(),
@@ -192,19 +204,24 @@ export default function Home() {
         }, 2000);
     }, []);
     
-    // Initialize WebSocket and SSE connections
+    // Initialize SSE connections only
     useEffect(() => {
         if (typeof window === 'undefined') return;
         
-        console.log('🔥 Initializing WebSocket connection...');
-        socket.connect();
+        console.log('🔥 Initializing SSE connections...');
         telemetry.connect();
         
-        // Log connection status
-        const statusUnsubscribe = socket.onStatusChange((connected) => {
-            console.log('🔥 WebSocket status:', connected ? 'CONNECTED' : 'DISCONNECTED');
-            setIsConnected(connected);
-        });
+        // Check backend connection via health endpoint
+        const checkConnection = async () => {
+            try {
+                const response = await fetch('http://localhost:5001/health');
+                setIsConnected(response.ok);
+            } catch {
+                setIsConnected(false);
+            }
+        };
+        checkConnection();
+        const interval = setInterval(checkConnection, 30000); // Check every 30s
 
         // Subscribe to agent state changes
         const agentUnsubscribe = agent.onStateChange((state) => {
@@ -231,148 +248,17 @@ export default function Home() {
         });
         
         return () => {
-            statusUnsubscribe();
+            clearInterval(interval);
             agentUnsubscribe();
             voiceUnsubscribe();
             transcriptUnsubscribe();
         };
-    }, [handleSendMessage]); // Include handleSendMessage in the dependency array
-    
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        
-        // Handle incoming messages
-        const unsubscribeMessage = socket.onMessage(async (data) => {
-            console.log('🔥 Received WebSocket message:', data);
-            
-            // Handle typing indicator
-            if (data.type === 'typing') {
-                setIsTyping(true);
-                return;
-            }
-            
-            // Handle different message types from backend
-            if (data.type === 'response') {
-                // Backend sends type: "response" for chat responses
-                if (data.content) {
-                    // Skip "Processing..." messages - they're just acknowledgments
-                    if (data.content === 'Processing your message...') {
-                        setIsTyping(true);
-                        return;
-                    }
-                    
-                    setMessages(prev => {
-                        // Remove any "Processing..." messages and add the actual response
-                        const filtered = prev.filter(msg => 
-                            msg.content !== 'Processing your message...' && 
-                            msg.id !== `processing-${prev.length}`
-                        );
-                        
-                        // Check if this response already exists (avoid duplicates)
-                        const exists = filtered.some(msg => 
-                            msg.type === 'phoenix' && 
-                            msg.content === data.content
-                        );
-                        
-                        if (exists) {
-                            return filtered;
-                        }
-                        
-                        return [...filtered, {
-                            id: `phoenix-${Date.now()}-${Math.random()}`,
-                            type: 'phoenix',
-                            content: data.content,
-                            timestamp: Date.now()
-                        }];
-                    });
-                    setIsTyping(false);
-                    
-                    // Store in agent memory (only if not a processing message)
-                    if (data.content !== 'Processing your message...') {
-                        await agent.addConversation({
-                            role: 'phoenix',
-                            content: data.content,
-                            timestamp: Date.now(),
-                            approved: data.approved !== false,
-                            warnings: data.warnings || []
-                        });
-                        
-                        // Speak the response if voice is enabled
-                        if (voiceEnabled && data.content) {
-                            voice.speak(data.content);
-                        }
-                    }
-                }
-            } else if (data.type === 'connected') {
-                console.log('🔥 Connected to Phoenix backend');
-                // Optionally add a connection message
-            } else if (data.type === 'chat' || data.type === 'echo') {
-                if (data.content && data.content !== 'Processing your message...') {
-                    setMessages(prev => {
-                        // Check for duplicates
-                        const exists = prev.some(msg => 
-                            msg.type === 'phoenix' && 
-                            msg.content === data.content
-                        );
-                        
-                        if (exists) {
-                            return prev;
-                        }
-                        
-                        return [...prev, {
-                            id: `phoenix-${Date.now()}-${Math.random()}`,
-                            type: 'phoenix',
-                            content: data.content,
-                            timestamp: Date.now()
-                        }];
-                    });
-                    setIsTyping(false);
-                    
-                    // Speak the response if voice is enabled
-                    if (voiceEnabled && data.content) {
-                        voice.speak(data.content);
-                    }
-                }
-            } else if (data.content && data.content !== 'Processing your message...') {
-                // Fallback for any message with content (but skip processing messages)
-                setMessages(prev => {
-                    const exists = prev.some(msg => 
-                        msg.type === 'phoenix' && 
-                        msg.content === data.content
-                    );
-                    
-                    if (exists) {
-                        return prev;
-                    }
-                    
-                    return [...prev, {
-                        id: `phoenix-${Date.now()}-${Math.random()}`,
-                        type: 'phoenix',
-                        content: data.content || data.message || JSON.stringify(data),
-                        timestamp: Date.now()
-                    }];
-                });
-                setIsTyping(false);
-                
-                // Speak the response if voice is enabled
-                if (voiceEnabled && data.content) {
-                    voice.speak(data.content);
-                }
-            } else {
-                console.warn('🔥 Unhandled WebSocket message:', data);
-            }
-        });
-
-        return () => {
-            unsubscribeMessage();
-        };
-    }, [voiceEnabled, handleSendMessage]);
+    }, [handleSendMessage]);
     
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             if (typeof window === 'undefined') return;
-            socket.disconnect();
             telemetry.disconnect();
         };
     }, []);

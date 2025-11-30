@@ -72,7 +72,7 @@ export default function SubconsciousPanel() {
           <div className={`relative rounded bg-black/60 p-3 border-l-4 ${isAnimating ? 'border-yellow-500' : 'border-red-900'}`}>
             <p className="text-sm text-gray-200 font-mono">"{lastEvent.last_thought}"</p>
             <div className="mt-2 flex justify-between items-center">
-              <span className="text-xs text-zinc-500">{lastEvent.active_loop}</span>
+              <span className="text-xs text-zinc-500">{lastEvent.loop_name}</span>
               <span className="text-xs text-zinc-500">{timeSinceLastEvent}</span>
             </div>
             
@@ -90,7 +90,7 @@ export default function SubconsciousPanel() {
               <div className="ml-2 w-full bg-zinc-800 rounded-full h-1.5">
                 <div 
                   className="bg-red-600 h-1.5 rounded-full" 
-                  style={{ width: `${lastEvent.metrics.cpu_usage}%` }}
+                  style={{ width: `${(lastEvent.metrics.cpu_usage || lastEvent.metrics.conscience_level || 0) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function SubconsciousPanel() {
               <div className="ml-2 w-full bg-zinc-800 rounded-full h-1.5">
                 <div 
                   className="bg-red-600 h-1.5 rounded-full" 
-                  style={{ width: `${lastEvent.metrics.memory_mb / 100 * 100}%` }}
+                  style={{ width: `${Math.min((lastEvent.metrics.memory_mb || 50) / 100 * 100, 100)}%` }}
                 ></div>
               </div>
             </div>

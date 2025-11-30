@@ -7,7 +7,7 @@ import { PhoenixContextPanel } from "@/features/system";
 import { ClientInitialization } from "@/components/ClientInitialization";
 import { TwinFlameWrapper } from "@/components/TwinFlameWrapper";
 import MatrixRain from "@/components/MatrixRain";
-import ZustandProvider from "@/providers/ZustandProvider";
+// ZustandProvider removed - using PhoenixContext only
 import "@/globals.css";
 
 // Import TanStack Query
@@ -146,7 +146,6 @@ export default function RootLayout({
         />
         {/* Global state providers */}
         <QueryClientProvider client={queryClient}>
-          <ZustandProvider>
             {/* Phoenix background effect */}
             <div className="fixed inset-0 z-0">
               <MatrixRain intensity={0.6} speed={1.2} />
@@ -240,7 +239,6 @@ export default function RootLayout({
               {/* Render page content */}
               {children}
             </div>
-          </ZustandProvider>
         </QueryClientProvider>
       </body>
     </html>

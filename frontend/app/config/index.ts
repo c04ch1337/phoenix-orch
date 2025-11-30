@@ -1,7 +1,7 @@
 'use client';
 
 interface EndpointConfig {
-  ws: string;
+  // ws removed - using SSE only
   api: string;
   metrics: string;
 }
@@ -49,7 +49,7 @@ export interface AppConfig {
 const developmentConfig: AppConfig = {
   env: 'development',
   endpoints: {
-    ws: 'ws://127.0.0.1:5001/ws/dad',
+    // WebSocket removed - using SSE only
     api: 'http://127.0.0.1:5001/api',
     metrics: 'http://127.0.0.1:5001/metrics',
   },
@@ -86,7 +86,7 @@ const stagingConfig: AppConfig = {
   ...developmentConfig,
   env: 'staging',
   endpoints: {
-    ws: 'wss://staging.phoenix-orch.io/ws',
+    // WebSocket removed - using SSE only
     api: 'https://staging.phoenix-orch.io/api',
     metrics: 'https://staging.phoenix-orch.io/metrics',
   },
@@ -100,7 +100,7 @@ const productionConfig: AppConfig = {
   ...stagingConfig,
   env: 'production',
   endpoints: {
-    ws: 'wss://phoenix-orch.io/ws',
+    // WebSocket removed - using SSE only
     api: 'https://phoenix-orch.io/api',
     metrics: 'https://phoenix-orch.io/metrics',
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+// Next.js Link removed - using Vite file-based routing
 
 interface RouteErrorProps {
   title?: string;
@@ -21,12 +21,12 @@ export default function RouteError({
         <h1 className="text-2xl font-bold text-red-500 mb-4">{title}</h1>
         <p className="text-zinc-400 mb-8">{message}</p>
         <div className="space-y-4">
-          <Link 
+          <a 
             href={returnPath}
             className="inline-block px-6 py-2 bg-red-700/20 border border-red-700/50 rounded text-red-400 hover:bg-red-700/30 transition-colors"
           >
             {returnText}
-          </Link>
+          </a>
           <div className="text-xs text-zinc-600">
             Error Code: PHOENIX-{Math.floor(Math.random() * 9000 + 1000)}
           </div>

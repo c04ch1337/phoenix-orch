@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import '@/features/system/styles/PhoenixContextPanel.css';
+import clsx from 'clsx';
 
 interface PhoenixContextPanelProps {
   conscience_level: number;
@@ -19,38 +19,43 @@ export default function PhoenixContextPanel({
   memory_age,
 }: PhoenixContextPanelProps) {
   return (
-    <div className="phoenix-context-panel">
-      <h2>PHOENIX CONTEXT</h2>
+    <div className={clsx(
+      "rounded-lg border border-red-800 bg-black/40 p-4 text-red-100",
+      "backdrop-blur-sm"
+    )}>
+      <h2 className="text-lg font-bold text-red-400 mb-4">PHOENIX CONTEXT</h2>
       
-      <div className="context-metric">
-        <label>Conscience:</label>
-        <div className="flame-meter">
-          <div 
-            className="flame-level" 
-            style={{width: `${conscience_level}%`}}
-          />
-          <span>{conscience_level}%</span>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-zinc-400">Conscience:</label>
+          <div className="flex-1 mx-4 bg-zinc-900 rounded-full h-2 overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-500"
+              style={{width: `${conscience_level}%`}}
+            />
+          </div>
+          <span className="text-sm font-mono text-red-400">{conscience_level}%</span>
         </div>
-      </div>
 
-      <div className="context-metric">
-        <label>Active Mission:</label>
-        <span>{active_mission || "None"}</span>
-      </div>
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-zinc-400">Active Mission:</label>
+          <span className="text-sm text-red-300">{active_mission || "None"}</span>
+        </div>
 
-      <div className="context-metric">
-        <label>Ember watching:</label>
-        <span>{ember_targets} targets</span>
-      </div>
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-zinc-400">Ember watching:</label>
+          <span className="text-sm text-red-300">{ember_targets} targets</span>
+        </div>
 
-      <div className="context-metric">
-        <label>Cipher watching:</label>
-        <span>{cipher_anomalies} anomalies</span>
-      </div>
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-zinc-400">Cipher watching:</label>
+          <span className="text-sm text-red-300">{cipher_anomalies} anomalies</span>
+        </div>
 
-      <div className="context-metric">
-        <label>Memory age:</label>
-        <span>{memory_age} days since rebirth</span>
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-zinc-400">Memory age:</label>
+          <span className="text-sm text-red-300">{memory_age} days since rebirth</span>
+        </div>
       </div>
     </div>
   );

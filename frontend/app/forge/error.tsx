@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+// Next.js Link removed - using Vite file-based routing
+// TODO: Replace with Leptos Router when migrated
 
 interface ErrorProps {
   error: Error;
@@ -23,12 +24,12 @@ export default function Error({ error, reset }: ErrorProps) {
           >
             Retry
           </button>
-          <Link
+          <a
             href="/"
             className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition"
           >
             Return Home
-          </Link>
+          </a>
         </div>
       </div>
     </div>
