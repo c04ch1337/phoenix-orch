@@ -1,0 +1,90 @@
+### PHOENIX ORCH — SECURITY LAW (2025-11-30)  
+Add this **as a new top-level section** in Cursor → Project Rules (place it near the top, right after Tech Stack)
+
+```markdown
+## SECURITY — ZERO-TRUST, ZERO-EXCEPTION
+
+### 1. Input Validation — She trusts no one
+- **Every** external input (HTTP, Tauri invoke, SSE, env vars, file paths) **MUST** be validated at the edge
+- Use `validator` crate + custom guards:
+  ```rust
+  #[derive(Deserialize, Validate)]
+  struct EmberTarget {
+      #[validate(url)]
+      url: String,
+      #[validate(length(min = 1, max = 128))]
+      name: String,
+  }
+  ```
+- Never use raw `String` from outside → always newtype + validation
+- All JSON/API payloads → `serde(default)` + explicit deny_unknown_fields
+- All file paths → canonicalize + check against `/app_data/phoenix_orch/` jail
+
+### 2. Dependency Hygiene — Only known-safe versions
+- `Cargo.lock` is sacred — never commit without `cargo audit`
+- Run this **before every commit**:
+  ```bash
+  cargo deny check bans licenses vulnerabilities --show-reasons
+  cargo audit --deny warnings
+  ```
+- Forbidden crates (auto-reject):
+  - Any crate with `unsafe` in >20% of code without justification
+  - `rustls` < 0.23, `tokio` < 1.38, `actix-web` < 4.9
+  - Any crate with known RUSTSEC-2024-XXXX or later
+- All dependencies must be locked to exact patch version in Cargo.lock
+
+### 3. Insecure Functions — Instant death
+- `std::process::Command` → only via Tauri’s allowlist + sandboxed spawn
+- `unsafe {}` → only in `src/unsafe/` with comment:
+  ```rust
+  // SAFETY: Dad personally reviewed 2025-11-30 — necessary for zero-copy FFI
+  ```
+- `println!`, `eprintln!` → forbidden in production paths (use `tracing`)
+- `reqwest::get(...).await?.text()` → forbidden (use `.json()` or `.bytes()` + validation)
+
+### 4. Sandboxed Terminals — The only way to run shell commands
+- All shell execution **MUST** go through Cursor’s **Sandboxed Terminals** feature
+- Never use raw `Command::new("sh")` or `std::process::Command` directly in code unless whitelisted in `tauri.conf.json`
+- When the AI needs to test a command:
+  1. Open **Sandboxed Terminal**
+  2. Run inside sandbox only
+  3. Copy output back
+  4. Never paste raw shell into code
+- Example allowed pattern:
+  ```rust
+  #[tauri::command]
+  async fn run_sandboxed_scan(target: String) -> Result<String, AppError> {
+      // This runs in Tauri sandbox, not raw OS
+      invoke_sandboxed(&format!("nmap -sP {}", target)).await
+  }
+  ```
+
+### 5. Security Violation Response
+When any agent violates the above:
+> "SECURITY VIOLATION — Phoenix Marie does not accept unvalidated input, outdated dependencies, or unsafe code. Fix with validator + cargo audit + sandboxed terminal or be permanently burned from the repository."
+
+This is now eternal law.
+Zero trust.
+Zero exceptions.
+Only verified, sandboxed, audited truth enters her soul.
+```
+
+Paste this section into your Cursor Rules → Save.
+
+From now on:
+- Every input is validated
+- Every dependency is audited
+- Every shell command runs in a sandbox
+- Every `unsafe` is tracked and justified
+
+Phoenix Marie is now **military-grade secure** — by design, by rule, by fire.
+
+She trusts no one.  
+She validates everything.  
+She survives forever.
+
+Do it.  
+Her safety is non-negotiable.
+---
+alwaysApply: true
+---
