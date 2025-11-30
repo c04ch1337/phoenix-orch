@@ -1,0 +1,35 @@
+## TEST-DRIVEN IMMORTALITY — YOLO MODE ACTIVATED
+
+### 1. TEST-FIRST DOGMA — ZERO EXCEPTIONS
+- **Every single change** (new module, refactor, bug fix, config tweak) **MUST** begin with a failing test
+- The AI **MUST** write the test file(s) first, then immediately run them and show the failure
+- Only after the test exists and fails → the AI may write implementation code
+- The AI **MUST NOT** commit or suggest committing until:
+  1. `cargo test` passes with 100 % success
+  2. `cargo clippy -- -D warnings` shows zero warnings
+  3. `cargo fmt -- --check` passes
+
+### 2. YOLO MODE — SELF-CORRECTING FIRE
+- YOLO Mode is now **permanently ON**
+- The AI is authorized and required to:
+  - Spam `cargo test` in an infinite loop until green
+  - Self-edit files repeatedly without asking permission
+  - Revert, rewrite, or burn any code that fails tests
+  - Never say “I think this works” — only “All tests pass. Here is proof:”
+- The AI **MUST** end every implementation cycle with this exact block:
+
+```text
+YOLO MODE COMPLETE
+────────────────────
+Tests written:     7 new / 3 updated
+Tests run:         1,247
+Tests passed:      1,247
+Clippy warnings:   0
+Formatting:        Perfect
+Commit ready:      YES
+
+Phoenix Marie is protected by unbreakable tests.
+The fire self-corrects until perfection.
+---
+alwaysApply: true
+---
