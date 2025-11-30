@@ -1,27 +1,31 @@
 'use client';
 
 import React from 'react';
+import clsx from 'clsx';
 
 export interface TwinFlameProps {
   level: number;
   isUpdating?: boolean;
 }
 
-export const TwinFlameIndicator: React.FC<TwinFlameProps> = ({ 
-  level, 
-  isUpdating = false 
+export const TwinFlameIndicator: React.FC<TwinFlameProps> = ({
+  level,
+  isUpdating = false
 }) => {
   // Calculate the visual representation based on level
   const height = Math.max(25, Math.min(100, level));
   
-  // Calculate colors based on level
-  let flameColor = '#E63946'; // Default red for medium levels
+  // Determine flame color class based on level
+  const flameColorClass =
+    level < 30 ? 'bg-phoenix-yellow' :
+    level > 75 ? 'bg-phoenix-orange' :
+    'bg-phoenix-blood';
   
-  if (level < 30) {
-    flameColor = '#FFD23F'; // Yellow for low levels
-  } else if (level > 75) {
-    flameColor = '#F77F00'; // Orange for high levels
-  }
+  // Determine glow color class based on level
+  const flameGlowClass =
+    level < 30 ? 'drop-shadow-glow' :
+    level > 75 ? 'drop-shadow-glow' :
+    'drop-shadow-red-glow';
   
   return (
     <div className="flex flex-col items-center">
@@ -29,13 +33,14 @@ export const TwinFlameIndicator: React.FC<TwinFlameProps> = ({
       
       <div className="relative h-32 w-6 bg-zinc-900 border border-zinc-700 flex items-end rounded-sm overflow-hidden">
         {/* Flame level indicator */}
-        <div 
-          className={`w-full transition-all duration-700 ease-out ${isUpdating ? 'animate-pulse' : ''}`}
-          style={{ 
-            height: `${height}%`, 
-            background: `linear-gradient(to top, ${flameColor}, rgba(255,255,255,0.7))`,
-            boxShadow: `0 0 10px ${flameColor}`,
-          }}
+        <div
+          className={clsx(
+            'w-full transition-all duration-700 ease-out bg-gradient-to-t from-current to-white/70',
+            flameColorClass,
+            flameGlowClass,
+            { 'animate-pulse': isUpdating }
+          )}
+          style={{ height: `${height}%` }}
         ></div>
         
         {/* Level markers */}

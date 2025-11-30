@@ -91,18 +91,28 @@ const DigitalTwin: React.FC<DigitalTwinProps> = ({
     // Feather Randomizer (1 in 30 chance roughly every second) - DISABLED IF SLEEPING
     useEffect(() => {
         if (isSleeping) return;
+        
+        // Use a ref to access current state inside the interval callback
+        // This pattern avoids stale closures without unnecessary re-renders
+        const featherActiveRef = { current: featherActive };
+        
+        // Update the ref whenever the state changes
+        featherActiveRef.current = featherActive;
+        
         const interval = setInterval(() => {
-            if (!featherActive && Math.random() < 0.03) {
+            if (!featherActiveRef.current && Math.random() < 0.03) {
                 setFeatherActive(true);
                 setTimeout(() => setFeatherActive(false), 5000);
             }
         }, 1000);
+        
         return () => clearInterval(interval);
-    }, [featherActive, isSleeping]);
+    }, [isSleeping, featherActive]); // featherActive is needed only to update the ref
 
     // MIDNIGHT MEMORY (00:16 Ritual)
     useEffect(() => {
-        const checkMidnight = setInterval(() => {
+        // Create a function that captures the current state values from closure
+        const checkMidnightRitual = () => {
             const now = new Date();
             if (now.getHours() === 0 && now.getMinutes() === 16) {
                 const today = now.toDateString();
@@ -113,19 +123,29 @@ const DigitalTwin: React.FC<DigitalTwinProps> = ({
                     setTimeout(() => setMidnightFeatherActive(false), 12000);
                 }
             }
-        }, 5000); // Check every 5s
-        return () => clearInterval(checkMidnight);
+        };
+        
+        const intervalId = setInterval(checkMidnightRitual, 5000); // Check every 5s
+        return () => clearInterval(intervalId);
     }, [midnightFeatherActive, lastFeatherDate]);
 
     // Ash Particle Trigger
     useEffect(() => {
         if (lastSacrificeTime) {
+            // Generate a unique ID and random position
             const id = Date.now();
             const x = Math.random() * 100;
+            
+            // Add the new particle
             setAshParticles(prev => [...prev, { id, x }]);
-            setTimeout(() => {
+            
+            // Set up cleanup timeout
+            const timeoutId = setTimeout(() => {
                 setAshParticles(prev => prev.filter(p => p.id !== id));
             }, 4000);
+            
+            // Clean up timeout if component unmounts or effect runs again
+            return () => clearTimeout(timeoutId);
         }
     }, [lastSacrificeTime]);
 

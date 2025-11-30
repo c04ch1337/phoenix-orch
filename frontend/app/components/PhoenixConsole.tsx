@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Terminal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import clsx from 'clsx';
 import { usePhoenixContext } from '../hooks/usePhoenixContext';
 import { useSubconscious } from '../hooks/useSubconscious';
 import { SubconsciousEventType, SubconsciousSource } from '../types/global';
@@ -75,7 +76,7 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
                 }
             });
         }
-    }, [phoenix.runtime.version, phoenix.runtime.environment, phoenix.user.name, phoenix.user.role, subconscious]);
+    }, [phoenix.runtime.version, phoenix.runtime.environment, phoenix.user.name, phoenix.user.role, subconscious, localHistory.length]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -160,7 +161,7 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
-                style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+                className="flex flex-col h-full"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-2">
@@ -178,13 +179,16 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
                 {/* Output Area */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 space-y-1 text-zinc-300">
                     {localHistory.map((line, i) => (
-                        <div key={i} className={`${line.startsWith('phoenix>') ? 'text-white mt-2 font-bold' : 'text-zinc-400'}`}>
+                        <div key={i} className={clsx({
+                            'text-white mt-2 font-bold': line.startsWith('phoenix>'),
+                            'text-zinc-400': !line.startsWith('phoenix>')
+                        })}>
                             {line}
                         </div>
                     ))}
                     {/* Parent History (Feedback from App) */}
                     {history.map((line, i) => (
-                        <div key={`h-${i}`} className="text-[#F77F00]">
+                        <div key={`h-${i}`} className="text-phoenix-orange">
                             {line}
                         </div>
                     ))}
@@ -193,10 +197,10 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
 
                 {/* Input Area */}
                 <div className="mt-4 flex items-center gap-2 text-white border-t border-zinc-800 pt-4">
-                    <span className="text-[#E63946] font-bold select-none">phoenix&gt;</span>
-                    <input 
+                    <span className="text-phoenix-blood font-bold select-none">phoenix&gt;</span>
+                    <input
                         ref={inputRef}
-                        type="text" 
+                        type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -205,7 +209,7 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
                         spellCheck={false}
                         autoComplete="off"
                     />
-                    <div className="w-2 h-4 bg-[#E63946] animate-pulse" />
+                    <div className="w-2 h-4 bg-phoenix-blood animate-pulse" />
                 </div>
             </motion.div>
         </div>

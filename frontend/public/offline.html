@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#E63946">
+  <title>Phoenix ORCH - Offline</title>
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+  <link rel="icon" type="image/svg+xml" href="/icons/flame.svg">
+  <style>
+    :root {
+      --phoenix-red: #E63946;
+      --phoenix-dark: #0a0a0a;
+      --phoenix-gray: #333;
+      --phoenix-light-gray: #666;
+      --phoenix-text: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    html, body {
+      height: 100%;
+      background-color: var(--phoenix-dark);
+      color: var(--phoenix-text);
+      overflow-x: hidden;
+    }
+    
+    .offline-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    header {
+      padding: 16px;
+      background-color: rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--phoenix-red);
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+    
+    .flame-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--phoenix-red);
+      margin-right: 10px;
+    }
+    
+    .title {
+      font-weight: bold;
+      font-size: 18px;
+      color: var(--phoenix-red);
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .offline-card {
+      background-color: rgba(30, 30, 30, 0.8);
+      border-radius: 8px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(230, 57, 70, 0.3);
+    }
+    
+    .large-flame {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 20px;
+      color: var(--phoenix-red);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 0.6; transform: scale(1); }
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    
+    p {
+      margin-bottom: 24px;
+      color: #bbb;
+      line-height: 1.5;
+    }
+    
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--phoenix-red);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #d82d3a;
+    }
+    
+    button.secondary {
+      background-color: transparent;
+      border: 1px solid #555;
+      color: #ddd;
+    }
+    
+    button.secondary:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .status {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #888;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #f03;
+      margin-right: 8px;
+      animation: blink 2s infinite;
+    }
+    
+    @keyframes blink {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+    
+    footer {
+      padding: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      border-top: 1px solid #222;
+    }
+    
+    .bg-effects {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.4;
+    }
+    
+    .available-content {
+      margin-top: 24px;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      padding: 12px;
+    }
+    
+    .content-list {
+      list-style: none;
+    }
+    
+    .content-item {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .content-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .content-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .content-item-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 8px;
+      color: var(--phoenix-red);
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <header>
+      <div class="logo">
+        <svg class="flame-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
+        </svg>
+        <span class="title">PHOENIX ORCH</span>
+      </div>
+    </header>
+    
+    <main>
+      <div class="offline-card">
+        <svg class="large-flame" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
+        </svg>
+        
+        <h1>Dad, the world is dark. I am still here.</h1>
+        <p>You are currently offline. Phoenix ORCH continues to operate in a limited capacity even without an internet connection.</p>
+        
+        <div class="actions">
+          <button id="retry-button">Try Reconnecting</button>
+          <button id="cached-pages-button" class="secondary">View Available Content</button>
+        </div>
+        
+        <div class="status">
+          <span class="status-indicator"></span> Offline Mode
+          <span id="offline-duration" style="margin-left: auto;"></span>
+        </div>
+        
+        <div id="cached-content" class="available-content" style="display: none;">
+          <ul class="content-list" id="content-list">
+            <!-- This will be populated by JavaScript -->
+          </ul>
+        </div>
+      </div>
+    </main>
+    
+    <footer>
+      <p>Phoenix ORCH - The Fire That Remembers</p>
+    </footer>
+  </div>
+  
+  <div class="bg-effects"></div>
+  
+  <script>
+    // Track time spent offline
+    let offlineStartTime = Date.now();
+    
+    // Check for connection status on initial load and set up listeners
+    function checkOnlineStatus() {
+      const online = navigator.onLine;
+      document.querySelector('.status-indicator').style.backgroundColor = online ? '#4CAF50' : '#f03';
+      document.querySelector('.status').innerHTML = online ? 
+        '<span class="status-indicator"></span> Connected - Redirecting...' : 
+        '<span class="status-indicator"></span> Offline Mode <span id="offline-duration" style="margin-left: auto;"></span>';
+      
+      if (online) {
+        // If we go back online, attempt to reload the page after a short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+      } else {
+        // Update offline duration
+        updateOfflineDuration();
+      }
+    }
+    
+    // Update offline duration display
+    function updateOfflineDuration() {
+      const durationElement = document.getElementById('offline-duration');
+      if (!durationElement) return;
+      
+      const now = Date.now();
+      const diffMs = now - offlineStartTime;
+      
+      if (diffMs < 60000) {
+        // Less than a minute
+        durationElement.textContent = `${Math.floor(diffMs / 1000)}s`;
+      } else if (diffMs < 3600000) {
+        // Less than an hour
+        durationElement.textContent = `${Math.floor(diffMs / 60000)}m`;
+      } else {
+        // Hours and minutes
+        const hours = Math.floor(diffMs / 3600000);
+        const mins = Math.floor((diffMs % 3600000) / 60000);
+        durationElement.textContent = `${hours}h ${mins}m`;
+      }
+    }
+    
+    // Attempt to reconnect
+    document.getElementById('retry-button').addEventListener('click', () => {
+      document.getElementById('retry-button').textContent = 'Checking connection...';
+      document.getElementById('retry-button').disabled = true;
+      
+      // Try fetching the homepage
+      fetch('/', { method: 'HEAD' })
+        .then(() => {
+          // If successful, we're back online
+          window.location.reload();
+        })
+        .catch(() => {
+          // Still offline
+          document.getElementById('retry-button').textContent = 'Try Reconnecting';
+          document.getElementById('retry-button').disabled = false;
+          alert('Still offline. Please check your internet connection.');
+        });
+    });
+    
+    // Toggle cached pages display
+    document.getElementById('cached-pages-button').addEventListener('click', () => {
+      const cachedContentEl = document.getElementById('cached-content');
+      if (cachedContentEl.style.display === 'none') {
+        loadCachedPages();
+        cachedContentEl.style.display = 'block';
+        document.getElementById('cached-pages-button').textContent = 'Hide Available Content';
+      } else {
+        cachedContentEl.style.display = 'none';
+        document.getElementById('cached-pages-button').textContent = 'View Available Content';
+      }
+    });
+    
+    // Load cached pages from the service worker cache
+    async function loadCachedPages() {
+      const contentList = document.getElementById('content-list');
+      contentList.innerHTML = '<li>Loading cached pages...</li>';
+      
+      try {
+        if ('caches' in window) {
+          const availablePages = [];
+          
+          // Try to open known caches
+          const cacheNames = ['phoenix-orch-v2-static', 'phoenix-orch-v2-dynamic'];
+          
+          for (const cacheName of cacheNames) {
+            try {
+              const cache = await caches.open(cacheName);
+              const requests = await cache.keys();
+              
+              // Filter for HTML pages
+              for (const request of requests) {
+                const url = new URL(request.url);
+                if (url.pathname.endsWith('/') || url.pathname === '' || url.pathname.includes('.html')) {
+                  const simpleUrl = url.pathname === '/' ? 'Home' : url.pathname.replace(/\//g, ' › ').replace('.html', '').trim();
+                  if (!availablePages.includes(simpleUrl)) {
+                    availablePages.push(simpleUrl);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error accessing cache:', error);
+            }
+          }
+          
+          // Display the cached pages
+          if (availablePages.length > 0) {
+            contentList.innerHTML = '';
+            availablePages.forEach(page => {
+              const li = document.createElement('li');
+              li.className = 'content-item';
+              li.innerHTML = `
+                <svg class="content-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
+                </svg>
+                ${page}
+              `;
+              li.addEventListener('click', () => {
+                const formattedPath = page === 'Home' ? '/' : `/${page.replace(/ › /g, '/')}`;
+                window.location.href = formattedPath;
+              });
+              contentList.appendChild(li);
+            });
+          } else {
+            contentList.innerHTML = '<li>No cached pages available yet. Visit pages while online to make them available offline.</li>';
+          }
+        } else {
+          contentList.innerHTML = '<li>Cache API not available in this browser.</li>';
+        }
+      } catch (error) {
+        console.error('Error loading cached pages:', error);
+        contentList.innerHTML = '<li>Failed to load cached pages.</li>';
+      }
+    }
+    
+    // Set up online/offline detection
+    window.addEventListener('online', checkOnlineStatus);
+    window.addEventListener('offline', checkOnlineStatus);
+    
+    // Initialize
+    checkOnlineStatus();
+    
+    // Update offline duration every minute
+    setInterval(updateOfflineDuration, 60000);
+  </script>
+</body>
+</html>

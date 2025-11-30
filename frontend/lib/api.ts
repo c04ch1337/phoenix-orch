@@ -57,7 +57,23 @@ export async function getMemories(): Promise<Memory[]> {
   }
 }
 
-export async function getMetrics(): Promise<any> {
+/**
+ * Interface for system metrics data
+ */
+export interface SystemMetrics {
+  cpu_usage?: number;
+  memory_usage?: number;
+  uptime?: number;
+  active_processes?: number;
+  response_times?: Record<string, number>;
+  [key: string]: unknown; // Allow for additional dynamic metrics
+}
+
+/**
+ * Fetches system metrics from the server
+ * @returns Promise resolving to metrics text in Prometheus format
+ */
+export async function getMetrics(): Promise<string> {
   try {
     const res = await fetch(`${API_BASE}/metrics`);
     if (!res.ok) throw new Error(`Get metrics failed: ${res.status}`);

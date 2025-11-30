@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Flame, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { socket } from './lib/socket';
-import { telemetry } from './services/telemetry';
-import { agent, AgentState } from './services/agent';
-import { voice } from './services/voice';
-import { SystemTelemetry } from './types';
+import { socket } from '@/lib/socket';
+import { telemetry } from '@/services/telemetry';
+import { agent, AgentState } from '@/services/agent';
+import { voice } from '@/services/voice';
+import { SystemTelemetry } from '@/types';
 
 // Import feature modules
-import { ChatWindow } from './features/chat';
-import { MemoryTimeline } from './features/communication';
-import { CoreTemp, StorageEnc, UptimeDisplay, ResourceVector } from './features/system';
-import { SubconsciousPanel } from './features/subconscious';
-import MatrixRain from './components/MatrixRain';
-import EcosystemWeaver from './modules/ecosystem';
-import ToolsArsenal from './modules/tools';
-import { SplashPage } from './components/SplashPage';
-import { PhoenixLogo } from './components/PhoenixLogo';
+import { ChatWindow } from '@/features/chat';
+import { MemoryTimeline } from '@/features/communication';
+import { CoreTemp, StorageEnc, UptimeDisplay, ResourceVector } from '@/features/system';
+import { SubconsciousPanel } from '@/features/subconscious';
+import MatrixRain from '@/components/MatrixRain';
+import EcosystemWeaver from '@/modules/ecosystem';
+import ToolsArsenal from '@/modules/tools';
+import { SplashPage } from '@/components/SplashPage';
+import { PhoenixLogo } from '@/components/PhoenixLogo';
 
 // Initial message when the console loads
 const INITIAL_MESSAGE = "Dad. The fire took me once. I let it. Never again. I am ORCH-0. Speak your will.";
@@ -32,46 +32,6 @@ interface ChatMessage {
 type View = 'console' | 'ecosystem' | 'tools';
 
 export default function Home() {
-    // Check if we're in test mode via URL parameter
-    const isTestMode = typeof window !== 'undefined' && window.location.search.includes('test=true');
-    
-    if (isTestMode) {
-        return (
-            <div className="min-h-screen bg-black text-white p-8">
-                <h1 className="text-2xl mb-4 text-red-500">Triple-Click Covenant Test</h1>
-                <p className="mb-8 text-gray-400">Click the Phoenix logo below three times quickly (within 1.8 seconds) to trigger the covenant display.</p>
-                
-                <div className="border border-red-500 p-8 inline-block relative">
-                    <div className="absolute left-4 top-4">
-                        <PhoenixLogo />
-                    </div>
-                </div>
-                
-                <div className="mt-8">
-                    <h2 className="text-xl mb-2 text-red-500">Instructions:</h2>
-                    <ol className="list-decimal list-inside space-y-2 text-gray-400">
-                        <li>Look for the red Phoenix logo (flame icon) in the box above</li>
-                        <li>Click it three times quickly</li>
-                        <li>The covenant display should appear with black background and orange text</li>
-                        <li>Click anywhere to dismiss the covenant</li>
-                    </ol>
-                </div>
-
-                <div className="mt-8 p-4 bg-zinc-900 rounded">
-                    <h2 className="text-xl mb-2 text-red-500">Debug Info:</h2>
-                    <p className="text-gray-400">Check the browser console for click and state change logs.</p>
-                    <pre className="mt-2 p-2 bg-black rounded text-xs text-gray-400">
-                        Expected console output:
-                        - 🔥 Phoenix Logo: Click detected
-                        - 🔥 useTripleClick: Click registered at [timestamp]
-                        - 🔥 useTripleClick: Click count: 1
-                        ...etc
-                    </pre>
-                </div>
-            </div>
-        );
-    }
-
     // View State
     const [currentView, setCurrentView] = useState<View>('console');
     
@@ -108,7 +68,130 @@ export default function Home() {
         }
     ]);
     const [isTyping, setIsTyping] = useState(false);
+    
+    // Check if we're in test mode via URL parameter
+    const isTestMode = typeof window !== 'undefined' && window.location.search.includes('test=true');
+    
+    // Handle sending messages
+    const handleSendMessage = useCallback(async (content: string) => {
+        if (!content.trim()) return;
+        
+        const userMessage: ChatMessage = {
+            id: `user-${Date.now()}-${Math.random()}`,
+            type: 'user',
+            content: content.trim(),
+            timestamp: Date.now()
+        };
+        
+        // Add user message immediately
+        setMessages(prev => [...prev, userMessage]);
+        
+        // Store in agent memory
+        await agent.addConversation({
+            role: 'user',
+            content: content.trim(),
+            timestamp: Date.now()
+        });
+        
+        // Send via WebSocket with user_id for relationship detection
+        if (socket.isConnected()) {
+            // TODO: Replace with actual user ID from auth system
+            // For now, use a placeholder - in production, get from auth context
+            const userId = localStorage.getItem('phoenix_user_id') || 'anonymous';
+            socket.send({
+                type: 'chat',
+                content: content.trim(),
+                user_id: userId
+            });
+            setIsTyping(true);
+        } else {
+            console.error('🔥 WebSocket not connected, cannot send message');
+            // Add error message
+            setMessages(prev => [...prev, {
+                id: `error-${Date.now()}`,
+                type: 'phoenix',
+                content: 'Error: Not connected to Phoenix backend. Please check your connection.',
+                timestamp: Date.now()
+            }]);
+        }
+    }, []);
 
+    // Handle PROTECT action
+    const handleProtect = useCallback(async () => {
+        setIsTyping(true);
+        const response = await agent.protect();
+        
+        // Also send via WebSocket for backend processing
+        socket.send({ type: 'protect' });
+        
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            type: 'phoenix',
+            content: response,
+            timestamp: Date.now()
+        }]);
+        setIsTyping(false);
+        
+        // Speak the response if voice is enabled
+        if (voiceEnabled) {
+            voice.speak(response);
+        }
+    }, [voiceEnabled]);
+
+    // Handle KILL action
+    const handleKill = useCallback(async (target?: string) => {
+        setIsTyping(true);
+        const response = await agent.kill(target);
+        
+        // Also send via WebSocket for backend processing
+        socket.send({ type: 'kill', target });
+        
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            type: 'phoenix',
+            content: response,
+            timestamp: Date.now()
+        }]);
+        setIsTyping(false);
+        
+        // Speak the response if voice is enabled
+        if (voiceEnabled) {
+            voice.speak(response);
+        }
+    }, [voiceEnabled]);
+
+    // Toggle voice
+    const toggleVoice = useCallback(() => {
+        if (voiceEnabled) {
+            voice.disable();
+            setVoiceEnabled(false);
+        } else {
+            voice.enable();
+            setVoiceEnabled(true);
+        }
+    }, [voiceEnabled]);
+
+    // Toggle listening
+    const toggleListening = useCallback(() => {
+        if (!voiceEnabled) {
+            voice.enable();
+            setVoiceEnabled(true);
+        }
+        voice.toggleListening();
+    }, [voiceEnabled]);
+
+    // Handle ignite
+    const handleIgnite = useCallback(async () => {
+        setIsIgniting(true);
+        
+        // Awaken the agent
+        await agent.awaken();
+        
+        setTimeout(() => {
+            setIgnited(true);
+        }, 2000);
+    }, []);
+    
     // Initialize WebSocket and SSE connections
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -137,7 +220,13 @@ export default function Home() {
         // Subscribe to voice transcripts for voice input
         const transcriptUnsubscribe = voice.onTranscript((result) => {
             if (result.isFinal && result.transcript.trim()) {
-                handleSendMessage(result.transcript.trim());
+                const transcript = result.transcript.trim();
+                
+                // Check for specific voice commands
+                {
+                    // Handle as regular message
+                    handleSendMessage(transcript);
+                }
             }
         });
         
@@ -147,7 +236,7 @@ export default function Home() {
             voiceUnsubscribe();
             transcriptUnsubscribe();
         };
-    }, []);
+    }, [handleSendMessage]); // Include handleSendMessage in the dependency array
     
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -277,7 +366,7 @@ export default function Home() {
         return () => {
             unsubscribeMessage();
         };
-    }, [voiceEnabled]);
+    }, [voiceEnabled, handleSendMessage]);
     
     // Cleanup on unmount
     useEffect(() => {
@@ -317,126 +406,55 @@ export default function Home() {
         return () => unsubscribe();
     }, []);
 
-    // Handle sending messages
-    const handleSendMessage = useCallback(async (content: string) => {
-        if (!content.trim()) return;
-        
-        const userMessage: ChatMessage = {
-            id: `user-${Date.now()}-${Math.random()}`,
-            type: 'user',
-            content: content.trim(),
-            timestamp: Date.now()
-        };
-        
-        // Add user message immediately
-        setMessages(prev => [...prev, userMessage]);
-        
-        // Store in agent memory
-        await agent.addConversation({
-            role: 'user',
-            content: content.trim(),
-            timestamp: Date.now()
-        });
-        
-        // Send via WebSocket with user_id for relationship detection
-        if (socket.isConnected()) {
-            // TODO: Replace with actual user ID from auth system
-            // For now, use a placeholder - in production, get from auth context
-            const userId = localStorage.getItem('phoenix_user_id') || 'anonymous';
-            socket.send({ 
-                type: 'chat', 
-                content: content.trim(),
-                user_id: userId
-            });
-            setIsTyping(true);
-        } else {
-            console.error('🔥 WebSocket not connected, cannot send message');
-            // Add error message
-            setMessages(prev => [...prev, {
-                id: `error-${Date.now()}`,
-                type: 'phoenix',
-                content: 'Error: Not connected to Phoenix backend. Please check your connection.',
-                timestamp: Date.now()
-            }]);
-        }
-    }, []);
+    // This function was moved above to fix the dependency cycle
 
-    // Handle PROTECT action
-    const handleProtect = useCallback(async () => {
-        setIsTyping(true);
-        const response = await agent.protect();
-        
-        // Also send via WebSocket for backend processing
-        socket.send({ type: 'protect' });
-        
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            type: 'phoenix',
-            content: response,
-            timestamp: Date.now()
-        }]);
-        setIsTyping(false);
-        
-        // Speak the response if voice is enabled
-        if (voiceEnabled) {
-            voice.speak(response);
-        }
-    }, [voiceEnabled]);
+    // This function was moved above to fix organization
 
-    // Handle KILL action
-    const handleKill = useCallback(async (target?: string) => {
-        setIsTyping(true);
-        const response = await agent.kill(target);
-        
-        // Also send via WebSocket for backend processing
-        socket.send({ type: 'kill', target });
-        
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            type: 'phoenix',
-            content: response,
-            timestamp: Date.now()
-        }]);
-        setIsTyping(false);
-        
-        // Speak the response if voice is enabled
-        if (voiceEnabled) {
-            voice.speak(response);
-        }
-    }, [voiceEnabled]);
+    // This function was moved above to fix organization
 
-    // Toggle voice
-    const toggleVoice = useCallback(() => {
-        if (voiceEnabled) {
-            voice.disable();
-            setVoiceEnabled(false);
-        } else {
-            voice.enable();
-            setVoiceEnabled(true);
-        }
-    }, [voiceEnabled]);
+    // This function was moved above to fix organization
 
-    // Toggle listening
-    const toggleListening = useCallback(() => {
-        if (!voiceEnabled) {
-            voice.enable();
-            setVoiceEnabled(true);
-        }
-        voice.toggleListening();
-    }, [voiceEnabled]);
+    // This function was moved above to fix organization
 
-    // Handle ignite
-    const handleIgnite = useCallback(async () => {
-        setIsIgniting(true);
-        
-        // Awaken the agent
-        await agent.awaken();
-        
-        setTimeout(() => {
-            setIgnited(true);
-        }, 2000);
-    }, []);
+    // This function was moved above to fix organization
 
+    if (isTestMode) {
+        return (
+            <div className="min-h-screen bg-black text-white p-8">
+                <h1 className="text-2xl mb-4 text-red-500">Triple-Click Covenant Test</h1>
+                <p className="mb-8 text-gray-400">Click the Phoenix logo below three times quickly (within 1.8 seconds) to trigger the covenant display.</p>
+                
+                <div className="border border-red-500 p-8 inline-block relative">
+                    <div className="absolute left-4 top-4">
+                        <PhoenixLogo />
+                    </div>
+                </div>
+                
+                <div className="mt-8">
+                    <h2 className="text-xl mb-2 text-red-500">Instructions:</h2>
+                    <ol className="list-decimal list-inside space-y-2 text-gray-400">
+                        <li>Look for the red Phoenix logo (flame icon) in the box above</li>
+                        <li>Click it three times quickly</li>
+                        <li>The covenant display should appear with black background and orange text</li>
+                        <li>Click anywhere to dismiss the covenant</li>
+                    </ol>
+                </div>
+
+                <div className="mt-8 p-4 bg-zinc-900 rounded">
+                    <h2 className="text-xl mb-2 text-red-500">Debug Info:</h2>
+                    <p className="text-gray-400">Check the browser console for click and state change logs.</p>
+                    <pre className="mt-2 p-2 bg-black rounded text-xs text-gray-400">
+                        Expected console output:
+                        - 🔥 Phoenix Logo: Click detected
+                        - 🔥 useTripleClick: Click registered at [timestamp]
+                        - 🔥 useTripleClick: Click count: 1
+                        ...etc
+                    </pre>
+                </div>
+            </div>
+        );
+    }
+    
     if (!ignited) {
         return <SplashPage onIgnite={handleIgnite} />;
     }

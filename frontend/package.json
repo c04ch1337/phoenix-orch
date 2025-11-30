@@ -9,18 +9,23 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "type-check": "tsc --noEmit",
+    "lighthouse": "node lighthouse-check.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.11",
     "autoprefixer": "^10.4.22",
     "clsx": "^2.1.1",
     "dexie": "^4.2.1",
     "dotenv": "^17.2.3",
+    "eventsource-parser": "^3.0.6",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.284.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwindcss": "^4.1.17"
+    "tailwindcss": "^4.1.17",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.3.3",
@@ -34,10 +39,12 @@
     "@typescript-eslint/parser": "^6.10.0",
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/coverage-v8": "^0.34.6",
+    "chrome-launcher": "^1.2.1",
     "eslint": "^8.53.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
     "jsdom": "^23.2.0",
+    "lighthouse": "^11.7.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
     "vitest": "^0.34.6"

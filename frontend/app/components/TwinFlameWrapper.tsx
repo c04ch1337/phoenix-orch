@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { TwinFlameIndicator } from './TwinFlameIndicator';
+import { TwinFlameIndicator } from '@/components/TwinFlameIndicator';
 
 export const TwinFlameWrapper: React.FC = () => {
   const [conscienceLevel, setConscienceLevel] = useState(55);

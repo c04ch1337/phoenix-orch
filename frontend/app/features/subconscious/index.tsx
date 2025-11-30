@@ -1,17 +1,26 @@
-import React from 'react';
+import SubconsciousPanelComponent from './components/SubconsciousPanel';
+import { useSubconsciousStream, SubconsciousEvent } from './hooks/useSubconsciousStream';
 
-// Minimal implementation for SubconsciousPanel component
-export const SubconsciousPanel: React.FC = () => {
-  return (
-    <div className="border border-zinc-700 rounded p-2 bg-zinc-900">
-      <h3 className="text-sm text-zinc-400 mb-1">SUBCONSCIOUS ACTIVITY</h3>
-      <div className="space-y-1 text-xs text-zinc-500">
-        <div>System monitoring active...</div>
-        <div>Neural pathways stabilized</div>
-        <div>Memory integration complete</div>
-      </div>
-    </div>
-  );
-};
+// Export components
+export const SubconsciousPanel = SubconsciousPanelComponent;
 
-export default SubconsciousPanel;
+// Export hooks
+export { useSubconsciousStream };
+
+// Export types
+export type { SubconsciousEvent };
+
+/**
+ * Phoenix Subconscious Module
+ *
+ * This module provides components and hooks for connecting to the Phoenix
+ * Subconscious loop system via Server-Sent Events.
+ *
+ * The main components are:
+ * - SubconsciousPanel: Displays the latest thought from the Phoenix Subconscious
+ *
+ * The main hooks are:
+ * - useSubconsciousStream: Connects to the SSE endpoint and provides real-time events
+ */
+
+export default SubconsciousPanelComponent;

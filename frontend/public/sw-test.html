@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Service Worker Test</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0f0f0f;
+            color: #f0f0f0;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+        .phoenix-title {
+            color: #E63946;
+            font-weight: bold;
+        }
+        .card {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #E63946;
+        }
+        button {
+            background-color: #E63946;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        pre {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+        }
+        .status.error {
+            background-color: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+        }
+        .status.warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+        }
+        .status.info {
+            background-color: rgba(23, 162, 184, 0.2);
+            border: 1px solid #17a2b8;
+        }
+        .test-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffc107;
+            color: #000;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            display: none;
+        }
+        .log-container {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .log-entry.info {
+            color: #17a2b8;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .log-entry.warning {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-indicator" id="offlineIndicator">
+        You are currently offline. Testing offline capabilities.
+    </div>
+
+    <header>
+        <h1><span class="phoenix-title">PHOENIX</span> Service Worker Test</h1>
+        <p>Test page for verifying service worker functionality with Cache-First strategy</p>
+    </header>
+
+    <div class="card">
+        <h2>Service Worker Status</h2>
+        <div id="swStatus" class="status info">Checking service worker status...</div>
+        <div class="button-group">
+            <button id="registerSW">Register SW</button>
+            <button id="unregisterSW">Unregister SW</button>
+            <button id="updateSW">Update SW</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Cache Testing</h2>
+        <p>Test different caching strategies for various resource types</p>
+        
+        <h3>Static Assets (Cache-First)</h3>
+        <button id="testStaticAsset">Test Static Asset</button>
+        <div id="staticAssetResult" class="status"></div>
+
+        <h3>API Requests (Network with Cache Fallback)</h3>
+        <button id="testApiRequest">Test API Request</button>
+        <div id="apiRequestResult" class="status"></div>
+
+        <h3>Image Caching</h3>
+        <button id="testImageCache">Test Image Cache</button>
+        <div id="imageCacheResult" class="status"></div>
+        <img id="testImage" class="test-image" style="display: none;" alt="Test image">
+    </div>
+
+    <div class="card">
+        <h2>Offline Capabilities</h2>
+        <p>Test service worker behavior when offline</p>
+        <button id="simulateOffline">Simulate Offline</button>
+        <button id="simulateOnline">Simulate Online</button>
+        <div id="offlineResult" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>Cache Management</h2>
+        <button id="clearAllCaches">Clear All Caches</button>
+        <button id="getCacheSize">Get Cache Size</button>
+        <div id="cacheManagementResult" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>Log Output</h2>
+        <div id="logContainer" class="log-container"></div>
+    </div>
+
+    <script>
+        // Helper for logging
+        const logger = {
+            container: document.getElementById('logContainer'),
+            log: function(message, type = 'info') {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `${new Date().toTimeString().split(' ')[0]} - ${message}`;
+                this.container.appendChild(entry);
+                this.container.scrollTop = this.container.scrollHeight;
+                console.log(message);
+            }
+        };
+
+        // Check if service worker is supported
+        if (!('serviceWorker' in navigator)) {
+            document.getElementById('swStatus').textContent = 'Service Workers are not supported in this browser!';
+            document.getElementById('swStatus').className = 'status error';
+            logger.log('Service Workers not supported', 'error');
+        } else {
+            checkServiceWorker();
+        }
+
+        // Update service worker status
+        async function checkServiceWorker() {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    document.getElementById('swStatus').textContent = 'No Service Worker registered';
+                    document.getElementById('swStatus').className = 'status warning';
+                    logger.log('No Service Worker registered', 'warning');
+                } else {
+                    const registration = registrations[0];
+                    let status = `Service Worker registered for scope ${registration.scope}`;
+                    
+                    if (registration.installing) {
+                        status += ' (installing)';
+                    } else if (registration.waiting) {
+                        status += ' (waiting)';
+                    } else if (registration.active) {
+                        status += ' (active)';
+                    }
+                    
+                    document.getElementById('swStatus').textContent = status;
+                    document.getElementById('swStatus').className = 'status success';
+                    logger.log(status);
+                }
+            } catch (error) {
+                document.getElementById('swStatus').textContent = 'Error checking Service Worker: ' + error.message;
+                document.getElementById('swStatus').className = 'status error';
+                logger.log('Error checking SW: ' + error.message, 'error');
+            }
+        }
+
+        // Register service worker
+        document.getElementById('registerSW').addEventListener('click', async () => {
+            try {
+                logger.log('Attempting to register service worker...');
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                logger.log('Service Worker registered successfully', 'info');
+                checkServiceWorker();
+            } catch (error) {
+                logger.log('Registration failed: ' + error.message, 'error');
+            }
+        });
+
+        // Unregister service worker
+        document.getElementById('unregisterSW').addEventListener('click', async () => {
+            try {
+                logger.log('Attempting to unregister service worker...');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    logger.log('No Service Worker to unregister', 'warning');
+                    return;
+                }
+                
+                let success = false;
+                for (const registration of registrations) {
+                    success = await registration.unregister();
+                    if (success) {
+                        logger.log('Service Worker unregistered successfully', 'info');
+                    }
+                }
+                
+                checkServiceWorker();
+            } catch (error) {
+                logger.log('Unregistration failed: ' + error.message, 'error');
+            }
+        });
+
+        // Update service worker
+        document.getElementById('updateSW').addEventListener('click', async () => {
+            try {
+                logger.log('Checking for Service Worker updates...');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    logger.log('No Service Worker to update', 'warning');
+                    return;
+                }
+                
+                for (const registration of registrations) {
+                    await registration.update();
+                    logger.log('Update check completed', 'info');
+                }
+                
+                checkServiceWorker();
+            } catch (error) {
+                logger.log('Update failed: ' + error.message, 'error');
+            }
+        });
+
+        // Test static asset caching
+        document.getElementById('testStaticAsset').addEventListener('click', async () => {
+            const resultElement = document.getElementById('staticAssetResult');
+            resultElement.textContent = 'Testing static asset caching...';
+            resultElement.className = 'status info';
+            
+            try {
+                logger.log('Testing static asset caching...');
+                
+                const start = performance.now();
+                const response = await fetch('/manifest.json');
+                const end = performance.now();
+                
+                if (response.status === 200) {
+                    const data = await response.json();
+                    const time = (end - start).toFixed(2);
+                    
+                    resultElement.textContent = `Success! Loaded in ${time}ms`;
+                    resultElement.className = 'status success';
+                    
+                    // Make a second request to test cache
+                    logger.log(`First load time: ${time}ms. Trying second request to test cache...`);
+                    
+                    const cacheStart = performance.now();
+                    await fetch('/manifest.json');
+                    const cacheEnd = performance.now();
+                    
+                    const cacheTime = (cacheEnd - cacheStart).toFixed(2);
+                    logger.log(`Second load time: ${cacheTime}ms`);
+                    
+                    if (cacheTime < time) {
+                        resultElement.textContent += `. Second load faster: ${cacheTime}ms (likely from cache)`;
+                    } else {
+                        resultElement.textContent += `. Second load: ${cacheTime}ms (might not be cached)`;
+                    }
+                } else {
+                    resultElement.textContent = `Error: ${response.status} ${response.statusText}`;
+                    resultElement.className = 'status error';
+                    logger.log(`Error loading static asset: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error testing static asset: ' + error.message, 'error');
+            }
+        });
+
+        // Test API request caching
+        document.getElementById('testApiRequest').addEventListener('click', async () => {
+            const resultElement = document.getElementById('apiRequestResult');
+            resultElement.textContent = 'Testing API request caching...';
+            resultElement.className = 'status info';
+            
+            try {
+                logger.log('Testing API request caching...');
+                
+                // Use a test API endpoint (this is a mock example)
+                const apiUrl = 'https://jsonplaceholder.typicode.com/todos/1';
+                
+                const start = performance.now();
+                const response = await fetch(apiUrl);
+                const end = performance.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const time = (end - start).toFixed(2);
+                    
+                    resultElement.textContent = `Success! API request completed in ${time}ms`;
+                    resultElement.className = 'status success';
+                    
+                    // Test caching with a second request
+                    logger.log(`First API request time: ${time}ms. Trying second request...`);
+                    
+                    const cacheStart = performance.now();
+                    await fetch(apiUrl);
+                    const cacheEnd = performance.now();
+                    
+                    const cacheTime = (cacheEnd - cacheStart).toFixed(2);
+                    logger.log(`Second API request time: ${cacheTime}ms`);
+                    
+                    resultElement.textContent += `. Second request: ${cacheTime}ms`;
+                } else {
+                    resultElement.textContent = `Error: ${response.status} ${response.statusText}`;
+                    resultElement.className = 'status error';
+                    logger.log(`API request failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error testing API request: ' + error.message, 'error');
+            }
+        });
+
+        // Test image caching
+        document.getElementById('testImageCache').addEventListener('click', async () => {
+            const resultElement = document.getElementById('imageCacheResult');
+            const imageElement = document.getElementById('testImage');
+            
+            resultElement.textContent = 'Testing image caching...';
+            resultElement.className = 'status info';
+            imageElement.style.display = 'none';
+            
+            try {
+                logger.log('Testing image caching...');
+                
+                // Use a sample image
+                const imageUrl = '/icons/flame.svg'; 
+                
+                const start = performance.now();
+                const response = await fetch(imageUrl);
+                const end = performance.now();
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const time = (end - start).toFixed(2);
+                    
+                    // Display the image
+                    const objectUrl = URL.createObjectURL(blob);
+                    imageElement.src = objectUrl;
+                    imageElement.style.display = 'block';
+                    
+                    resultElement.textContent = `Success! Image loaded in ${time}ms`;
+                    resultElement.className = 'status success';
+                    
+                    // Test caching with a second request
+                    logger.log(`First image load time: ${time}ms. Trying second request...`);
+                    
+                    const cacheStart = performance.now();
+                    await fetch(imageUrl);
+                    const cacheEnd = performance.now();
+                    
+                    const cacheTime = (cacheEnd - cacheStart).toFixed(2);
+                    logger.log(`Second image load time: ${cacheTime}ms`);
+                    
+                    if (cacheTime < time) {
+                        resultElement.textContent += `. Second load faster: ${cacheTime}ms (likely from cache)`;
+                    } else {
+                        resultElement.textContent += `. Second load: ${cacheTime}ms (might not be cached)`;
+                    }
+                } else {
+                    resultElement.textContent = `Error: ${response.status} ${response.statusText}`;
+                    resultElement.className = 'status error';
+                    logger.log(`Error loading image: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error testing image cache: ' + error.message, 'error');
+            }
+        });
+
+        // Simulate offline mode
+        document.getElementById('simulateOffline').addEventListener('click', () => {
+            const resultElement = document.getElementById('offlineResult');
+            const offlineIndicator = document.getElementById('offlineIndicator');
+            
+            try {
+                logger.log('Simulating offline mode...');
+                
+                // We can't actually go offline programmatically, so this is a simulation
+                offlineIndicator.style.display = 'block';
+                resultElement.textContent = 'Offline simulation active. Try loading assets now.';
+                resultElement.className = 'status warning';
+                
+                // You can use DevTools to toggle the "Offline" checkbox in the Network panel
+                logger.log('Please use DevTools Network panel to enable offline mode', 'warning');
+                logger.log('Go to Network tab > check "Offline" checkbox', 'info');
+                
+                // Listen for actual offline events
+                window.addEventListener('offline', () => {
+                    logger.log('Device is actually offline now!', 'warning');
+                });
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error simulating offline: ' + error.message, 'error');
+            }
+        });
+
+        // Simulate online mode
+        document.getElementById('simulateOnline').addEventListener('click', () => {
+            const resultElement = document.getElementById('offlineResult');
+            const offlineIndicator = document.getElementById('offlineIndicator');
+            
+            try {
+                logger.log('Returning to online mode...');
+                
+                offlineIndicator.style.display = 'none';
+                resultElement.textContent = 'Online mode active.';
+                resultElement.className = 'status success';
+                
+                // You can use DevTools to toggle the "Offline" checkbox in the Network panel
+                logger.log('Please use DevTools Network panel to disable offline mode', 'info');
+                logger.log('Go to Network tab > uncheck "Offline" checkbox', 'info');
+                
+                // Listen for actual online events
+                window.addEventListener('online', () => {
+                    logger.log('Device is back online!', 'info');
+                });
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error returning to online: ' + error.message, 'error');
+            }
+        });
+
+        // Clear all caches
+        document.getElementById('clearAllCaches').addEventListener('click', async () => {
+            const resultElement = document.getElementById('cacheManagementResult');
+            
+            try {
+                logger.log('Attempting to clear all caches...');
+                resultElement.textContent = 'Clearing all caches...';
+                resultElement.className = 'status info';
+                
+                if (!navigator.serviceWorker.controller) {
+                    resultElement.textContent = 'No active service worker to clear caches';
+                    resultElement.className = 'status warning';
+                    logger.log('No active service worker to clear caches', 'warning');
+                    return;
+                }
+                
+                // Send message to service worker
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'CLEAR_CACHE'
+                });
+                
+                // Listen for response
+                navigator.serviceWorker.addEventListener('message', function handler(event) {
+                    if (event.data && event.data.type === 'CACHE_CLEARED') {
+                        navigator.serviceWorker.removeEventListener('message', handler);
+                        resultElement.textContent = 'All caches cleared successfully';
+                        resultElement.className = 'status success';
+                        logger.log('All caches cleared', 'info');
+                    }
+                });
+                
+                // Set a timeout in case no response is received
+                setTimeout(() => {
+                    resultElement.textContent = 'Cache clear request sent (no confirmation received)';
+                    resultElement.className = 'status warning';
+                    logger.log('No cache clear confirmation received', 'warning');
+                }, 3000);
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error clearing caches: ' + error.message, 'error');
+            }
+        });
+
+        // Get cache size
+        document.getElementById('getCacheSize').addEventListener('click', async () => {
+            const resultElement = document.getElementById('cacheManagementResult');
+            
+            try {
+                logger.log('Getting cache information...');
+                resultElement.textContent = 'Retrieving cache info...';
+                resultElement.className = 'status info';
+                
+                if ('caches' in window) {
+                    const cacheNames = await window.caches.keys();
+                    
+                    if (cacheNames.length === 0) {
+                        resultElement.textContent = 'No caches found';
+                        resultElement.className = 'status warning';
+                        logger.log('No caches found', 'warning');
+                        return;
+                    }
+                    
+                    let cacheInfo = 'Caches found:\n';
+                    
+                    for (const cacheName of cacheNames) {
+                        const cache = await window.caches.open(cacheName);
+                        const requests = await cache.keys();
+                        
+                        cacheInfo += `• ${cacheName}: ${requests.length} items\n`;
+                        logger.log(`Cache "${cacheName}": ${requests.length} items`);
+                    }
+                    
+                    resultElement.textContent = cacheInfo;
+                    resultElement.className = 'status success';
+                } else {
+                    resultElement.textContent = 'Cache API not supported in this browser';
+                    resultElement.className = 'status error';
+                    logger.log('Cache API not supported', 'error');
+                }
+            } catch (error) {
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.className = 'status error';
+                logger.log('Error getting cache info: ' + error.message, 'error');
+            }
+        });
+
+        // Check if we are actually offline
+        window.addEventListener('load', () => {
+            if (!navigator.onLine) {
+                document.getElementById('offlineIndicator').style.display = 'block';
+                logger.log('Currently OFFLINE', 'warning');
+            } else {
+                logger.log('Currently online', 'info');
+            }
+        });
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            document.getElementById('offlineIndicator').style.display = 'none';
+            logger.log('Connection restored - back online', 'info');
+        });
+
+        window.addEventListener('offline', () => {
+            document.getElementById('offlineIndicator').style.display = 'block';
+            logger.log('Connection lost - offline mode', 'warning');
+        });
+    </script>
+</body>
+</html>

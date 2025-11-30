@@ -8,8 +8,7 @@ import {
     Network,
     Flame
 } from 'lucide-react';
-import { usePhoenixContext } from '../hooks/usePhoenixContext';
-import { useSubconscious } from '../hooks/useSubconscious';
+import { usePhoenixContext, useSubconscious } from '../providers/ZustandProvider';
 
 /**
  * Optional props that can override context-based defaults
@@ -29,9 +28,8 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
     onRightPanelToggle,
     onOpenConsole
 }: ConscienceGaugeProps) => {
-    // Get context values from PhoenixContext
+    // Get values from Zustand store using our custom hooks
     const phoenix = usePhoenixContext();
-    // Get subconscious state
     const subconscious = useSubconscious();
     
     // Derive values from context

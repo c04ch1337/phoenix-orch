@@ -2,11 +2,28 @@
 
 import { config } from '@/config';
 
+/**
+ * Represents an encrypted message with initialization vector and encrypted data
+ */
 export interface EncryptedMessage {
     iv: string;
     data: string;
 }
 
+/**
+ * Type representing any JSON-serializable data that can be encrypted/decrypted
+ */
+export type CryptoData =
+  | string
+  | number
+  | boolean
+  | null
+  | CryptoData[]
+  | { [key: string]: CryptoData };
+
+/**
+ * Service that handles encryption and decryption of data using the Web Crypto API
+ */
 class CryptoService {
     private static instance: CryptoService;
     private key: CryptoKey | null = null;
@@ -37,7 +54,12 @@ class CryptoService {
         return this.key;
     }
 
-    public async encrypt(data: any): Promise<EncryptedMessage> {
+    /**
+     * Encrypts data using the current crypto key
+     * @param data The data to encrypt (must be JSON-serializable)
+     * @returns Promise resolving to an encrypted message object
+     */
+    public async encrypt<T extends CryptoData>(data: T): Promise<EncryptedMessage> {
         const key = await this.getKey();
         const iv = crypto.getRandomValues(new Uint8Array(config.crypto.ivLength));
         
@@ -59,7 +81,12 @@ class CryptoService {
         };
     }
 
-    public async decrypt(message: EncryptedMessage): Promise<any> {
+    /**
+     * Decrypts an encrypted message
+     * @param message The encrypted message to decrypt
+     * @returns Promise resolving to the decrypted data
+     */
+    public async decrypt<T extends CryptoData>(message: EncryptedMessage): Promise<T> {
         const key = await this.getKey();
         
         const iv = new Uint8Array(message.iv.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));

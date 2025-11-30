@@ -163,7 +163,8 @@ class VoiceService {
       'Begin memory backup sequence',
       'Check external network connections',
       'Analyze recent data patterns',
-      'Deploy countermeasures immediately'
+      'Deploy countermeasures immediately',
+      'Spawn NotebookLM'
     ];
     
     return phrases[Math.floor(Math.random() * phrases.length)];

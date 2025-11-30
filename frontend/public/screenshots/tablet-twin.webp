@@ -1,0 +1,7 @@
+<!-- This would normally be a WebP image file. For demonstration purposes, we're creating an SVG placeholder -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1668" height="2224" viewBox="0 0 1668 2224">
+  <rect width="1668" height="2224" fill="#0a0a0a"/>
+  <text x="834" y="1112" font-family="Arial" font-size="50" fill="#E63946" text-anchor="middle">Phoenix Digital Twin - Tablet View</text>
+  <rect x="150" y="300" width="1368" height="1624" fill="#111" stroke="#E63946" stroke-width="2"/>
+  <text x="834" y="400" font-family="Arial" font-size="35" fill="#fff" text-anchor="middle">DIGITAL TWIN STATUS</text>
+</svg>

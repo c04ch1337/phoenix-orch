@@ -18,24 +18,29 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      /* Original paths for backward compatibility */
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@services/*": ["src/services/*"],
-      "@phoenix/*": ["src/phoenix/*"],
-      "@tribute/*": ["src/tribute/*"],
-      "@types/*": ["src/types/*"],
+      /* Primary path mapping using Next.js App Router conventions */
+      "@/*": ["app/*"],
       
-      /* New paths for app directory */
+      /* Feature-specific path mappings */
+      "@/components/*": ["app/components/*"],
+      "@/services/*": ["app/services/*"],
+      "@/features/*": ["app/features/*"],
+      "@/types/*": ["app/types/*"],
+      "@/lib/*": ["app/lib/*"],
+      "@/modules/*": ["app/modules/*"],
+      "@/config/*": ["app/config/*"],
+      "@/styles/*": ["app/styles/*"],
+      "@/utils/*": ["app/utils/*"],
+      "@/hooks/*": ["app/hooks/*"],
+      "@/contexts/*": ["app/contexts/*"],
+      
+      /* Legacy paths for backward compatibility - to be removed after migration */
       "@app/*": ["app/*"],
-      "@app/components/*": ["app/components/*"],
-      "@app/services/*": ["app/services/*"],
-      "@app/types/*": ["app/types/*"],
-      "@app/lib/*": ["app/lib/*"],
-      "@app/modules/*": ["app/modules/*"],
-      "@app/config/*": ["app/config/*"],
-      "@app/styles/*": ["app/styles/*"],
-      "@app/phoenix/*": ["app/phoenix/*"]
+      "@components/*": ["app/components/*"],
+      "@services/*": ["app/services/*"],
+      "@features/*": ["app/features/*"],
+      "@phoenix/*": ["app/phoenix/*"],
+      "@tribute/*": ["app/tribute/*"]
     }
   },
   "include": ["src", "app", "tests"],

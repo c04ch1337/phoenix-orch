@@ -6,7 +6,7 @@
  * Voice command interface for ecosystem weaving commands
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Mic, MicOff, Volume2 } from 'lucide-react';
 import { useEcosystem } from '../hooks';
 
@@ -16,39 +16,8 @@ export default function VoiceCommander() {
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
     const { integrate, spawn } = useEcosystem();
 
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = (event: SpeechRecognitionEvent) => {
-                const current = event.resultIndex;
-                const transcript_text = event.results[current][0].transcript;
-                setTranscript(transcript_text);
-
-                // Process commands when final
-                if (event.results[current].isFinal) {
-                    processCommand(transcript_text);
-                }
-            };
-
-            recognition.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error);
-                setIsListening(false);
-            };
-
-            recognition.onend = () => {
-                setIsListening(false);
-            };
-
-            setRecognition(recognition);
-        }
-    }, []);
-
-    const processCommand = async (command: string) => {
+    // Define processCommand before it's used in the effect
+    const processCommand = useCallback(async (command: string) => {
         const lower = command.toLowerCase().trim();
 
         // "Weave in [framework/repo]"
@@ -234,8 +203,40 @@ export default function VoiceCommander() {
                 }
             }
         }
+    }, [integrate, spawn]);
 
-    };
+    // Set up speech recognition and handle results
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+            const SpeechRecognition = (window as any).webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event: SpeechRecognitionEvent) => {
+                const current = event.resultIndex;
+                const transcript_text = event.results[current][0].transcript;
+                setTranscript(transcript_text);
+
+                // Process commands when final
+                if (event.results[current].isFinal) {
+                    processCommand(transcript_text);
+                }
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error('Speech recognition error:', event.error);
+                setIsListening(false);
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            setRecognition(recognition);
+        }
+    }, [processCommand]);
 
     const toggleListening = () => {
         if (!recognition) {
@@ -318,4 +319,3 @@ interface SpeechRecognitionEvent {
 
 // Note: webkitSpeechRecognition is a browser-specific API
 // TypeScript declarations are handled via ambient module augmentation
-

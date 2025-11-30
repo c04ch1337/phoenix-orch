@@ -1,17 +1,42 @@
 "use client";
 
-import { cryptoService, EncryptedMessage } from '@/services/crypto';
+import { cryptoService, EncryptedMessage, CryptoData } from '@/services/crypto';
 
+/**
+ * Metadata for socket messages
+ */
 interface MessageMetadata {
     encrypted: boolean;
     sensitive: boolean;
 }
 
+/**
+ * Base payload type for WebSocket messages
+ */
+export type WebSocketPayload = CryptoData;
+
+/**
+ * Socket message payload formats
+ */
+export type SocketMessagePayload = {
+    [key: string]: CryptoData | undefined;
+    type?: string;
+    content?: string;
+};
+
+/**
+ * Message type for WebSocket communication
+ */
+export type MessageData = SocketMessagePayload | WebSocketPayload;
+
+/**
+ * Standard message format for WebSocket communication
+ */
 interface WebSocketMessage {
     type?: string;
     content?: string;
     metadata?: MessageMetadata;
-    payload?: any | EncryptedMessage;
+    payload?: WebSocketPayload | EncryptedMessage;
 }
 
 export class WebSocketService {
@@ -21,7 +46,7 @@ export class WebSocketService {
     private readonly maxReconnectAttempts = 3;
     private readonly initialReconnectDelay = 1000;
     private reconnectTimeout = this.initialReconnectDelay;
-    private messageHandlers: ((data: any) => void)[] = [];
+    private messageHandlers: ((data: MessageData) => void)[] = [];
     private statusHandlers: ((status: boolean) => void)[] = [];
 
     private constructor() {}
@@ -65,14 +90,18 @@ export class WebSocketService {
 
                     // Handle messages from mock server format
                     if (data.type && (data.content || data.type === 'typing')) {
-                        this.messageHandlers.forEach(handler => handler(data));
+                        const chatMessage: SocketMessagePayload = {
+                            type: 'chat',
+                            content: data.content || ''
+                        };
+                        this.messageHandlers.forEach(handler => handler(chatMessage));
                         return;
                     }
 
                     // Handle encrypted messages
                     if (data.metadata?.encrypted && data.payload) {
                         try {
-                            const decrypted = await cryptoService.decrypt(data.payload as EncryptedMessage);
+                            const decrypted = await cryptoService.decrypt<WebSocketPayload>(data.payload as EncryptedMessage);
                             this.messageHandlers.forEach(handler => handler(decrypted));
                         } catch (decryptError) {
                             console.error('🔥 Phoenix WebSocket: Failed to decrypt message', decryptError);
@@ -82,9 +111,15 @@ export class WebSocketService {
 
                     // Handle regular messages
                     if (data.payload) {
-                        this.messageHandlers.forEach(handler => handler(data.payload));
+                        // Ensure payload is a valid WebSocketPayload (CryptoData)
+                        const payload = data.payload as WebSocketPayload;
+                        this.messageHandlers.forEach(handler => handler(payload));
                     } else {
-                        this.messageHandlers.forEach(handler => handler(data));
+                        // Create a safe object from the message data
+                        const safeData: SocketMessagePayload = {};
+                        if (data.type) safeData.type = data.type;
+                        if (data.content) safeData.content = data.content;
+                        this.messageHandlers.forEach(handler => handler(safeData));
                     }
                 } catch (error) {
                     console.error('🔥 Phoenix WebSocket: Error processing message', error);
@@ -128,7 +163,12 @@ export class WebSocketService {
         }, this.reconnectTimeout);
     }
 
-    public async send(data: any, sensitive: boolean = false) {
+    /**
+     * Sends a message through the WebSocket connection
+     * @param data The data to send
+     * @param sensitive Whether the data is sensitive and should be encrypted
+     */
+    public async send(data: MessageData, sensitive: boolean = false) {
         if (this.ws?.readyState !== WebSocket.OPEN) {
             console.error('🔥 Phoenix WebSocket: Cannot send message - connection not open');
             return;
@@ -144,14 +184,31 @@ export class WebSocketService {
                 return;
             }
 
-            if (data.type) {
+            // Handle chat message type
+            if (data !== null && typeof data === 'object' && 'type' in data && data.type === 'chat') {
                 this.ws.send(JSON.stringify(data));
                 return;
             }
 
             // Handle encrypted messages
             if (sensitive) {
-                const encrypted = await cryptoService.encrypt(data);
+                // Convert message to a compatible format for encryption
+                const encryptableData: Record<string, CryptoData> = {};
+                
+                // If data is a plain object, convert to a safe format
+                if (data !== null && typeof data === 'object') {
+                    Object.entries(data).forEach(([key, value]) => {
+                        // Only include defined values that are compatible with CryptoData
+                        if (value !== undefined) {
+                            encryptableData[key] = value as CryptoData;
+                        }
+                    });
+                } else {
+                    // For primitive types, wrap in an object
+                    encryptableData.value = data as CryptoData;
+                }
+                
+                const encrypted = await cryptoService.encrypt(encryptableData);
                 const message: WebSocketMessage = {
                     metadata: {
                         encrypted: true,
@@ -176,7 +233,12 @@ export class WebSocketService {
         }
     }
 
-    public onMessage(handler: (data: any) => void) {
+    /**
+     * Registers a callback for incoming messages
+     * @param handler Function to be called when a message is received
+     * @returns Function to unsubscribe this handler
+     */
+    public onMessage(handler: (data: MessageData) => void) {
         this.messageHandlers.push(handler);
         return () => {
             this.messageHandlers = this.messageHandlers.filter(h => h !== handler);

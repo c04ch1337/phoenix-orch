@@ -20,7 +20,6 @@ const DEFAULT_FRAMEWORKS: FrameworkCard[] = [
     { id: 'langgraph', name: 'LangGraph', description: 'State machine for LLM applications', icon: '🕸️', color: 'orange', status: 'available' },
     { id: 'autogen', name: 'AutoGen', description: 'Conversational AI framework', icon: '💬', color: 'red', status: 'available' },
     { id: 'antigravity', name: 'Antigravity', description: 'Advanced agentic systems', icon: '🚀', color: 'yellow', status: 'available' },
-    { id: 'notebooklm', name: 'NotebookLM', description: 'AI notebook and research tool', icon: '📓', color: 'cyan', status: 'available' },
     { id: 'notion', name: 'Notion', description: 'Workspace and knowledge base', icon: '📝', color: 'orange', status: 'available' },
     { id: 'llamaindex', name: 'LlamaIndex', description: 'Data framework for LLMs', icon: '🦙', color: 'red', status: 'available' },
     { id: 'semantickernel', name: 'Semantic Kernel', description: 'Microsoft AI orchestration', icon: '⚡', color: 'cyan', status: 'available' },

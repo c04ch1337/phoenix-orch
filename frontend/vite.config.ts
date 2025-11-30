@@ -16,25 +16,31 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Updated src aliases for app directory
+      // Primary app directory alias (Next.js convention)
       '@': path.resolve(__dirname, './app'),
-      '@phoenix': path.resolve(__dirname, './phoenix'),
-      '@tribute': path.resolve(__dirname, './tribute/eternal.tsx'),
+      
+      // Standard Next.js-style path aliases
+      '@/components': path.resolve(__dirname, './app/components'),
+      '@/services': path.resolve(__dirname, './app/services'),
+      '@/types': path.resolve(__dirname, './app/types'),
+      '@/features': path.resolve(__dirname, './app/features'),
+      '@/modules': path.resolve(__dirname, './app/modules'),
+      '@/lib': path.resolve(__dirname, './app/lib'),
+      '@/config': path.resolve(__dirname, './app/config'),
+      '@/styles': path.resolve(__dirname, './app/styles'),
+      '@/utils': path.resolve(__dirname, './app/utils'),
+      '@/hooks': path.resolve(__dirname, './app/hooks'),
+      '@/contexts': path.resolve(__dirname, './app/contexts'),
+      
+      // Legacy aliases (maintained for compatibility during migration)
       '@components': path.resolve(__dirname, './app/components'),
       '@services': path.resolve(__dirname, './app/services'),
       '@types': path.resolve(__dirname, './app/types'),
       '@features': path.resolve(__dirname, './app/features'),
       
-      // New app directory aliases
-      '@app': path.resolve(__dirname, './app'),
-      '@app/components': path.resolve(__dirname, './app/components'),
-      '@app/services': path.resolve(__dirname, './app/services'),
-      '@app/types': path.resolve(__dirname, './app/types'),
-      '@app/features': path.resolve(__dirname, './app/features'),
-      '@app/modules': path.resolve(__dirname, './app/modules'),
-      '@app/lib': path.resolve(__dirname, './app/lib'),
-      '@app/config': path.resolve(__dirname, './app/config'),
-      '@app/styles': path.resolve(__dirname, './app/styles')
+      // Project-specific aliases
+      '@phoenix': path.resolve(__dirname, './phoenix'),
+      '@tribute': path.resolve(__dirname, './tribute/eternal.tsx')
     }
   },
   server: {

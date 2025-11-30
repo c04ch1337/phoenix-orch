@@ -1,0 +1,7 @@
+<!-- This would normally be a WebP image file. For demonstration purposes, we're creating an SVG placeholder -->
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440">
+  <rect width="2560" height="1440" fill="#0a0a0a"/>
+  <text x="1280" y="720" font-family="Arial" font-size="60" fill="#E63946" text-anchor="middle">Phoenix Dashboard - Desktop View</text>
+  <rect x="200" y="200" width="2160" height="1040" fill="#111" stroke="#E63946" stroke-width="2"/>
+  <text x="1280" y="300" font-family="Arial" font-size="40" fill="#fff" text-anchor="middle">PHOENIX ORCH DASHBOARD</text>
+</svg>

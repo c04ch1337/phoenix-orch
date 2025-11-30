@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import clsx from 'clsx';
 
 interface MatrixRainProps {
   intensity?: number;
@@ -96,10 +97,12 @@ const MatrixRain: React.FC<MatrixRainProps> = ({
   }, [intensity, speed]);
   
   return (
-    <canvas 
+    <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
-      style={{ opacity: 0.15 }}
+      className={clsx(
+        "fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-15",
+        "phoenix-rain" // Using the custom component defined in tailwind.config.js
+      )}
     />
   );
 };

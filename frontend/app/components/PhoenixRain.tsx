@@ -95,7 +95,7 @@ export default function PhoenixRain({ isWhiteHot = false }: PhoenixRainProps) {
       clearInterval(interval);
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, [isWhiteHot]); // Include isWhiteHot dependency since we use isWhiteHotRef which depends on it
 
   return (
     <canvas
