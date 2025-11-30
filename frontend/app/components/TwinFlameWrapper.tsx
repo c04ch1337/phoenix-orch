@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { TwinFlameIndicator } from '@/components/TwinFlameIndicator';
+import { TwinFlameIndicator } from './TwinFlameIndicator';
 
+/**
+ * TwinFlameWrapper component that simulates conscience level changes
+ * and renders the TwinFlameIndicator with updated levels
+ */
 export const TwinFlameWrapper: React.FC = () => {
   const [conscienceLevel, setConscienceLevel] = useState(55);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -25,9 +29,9 @@ export const TwinFlameWrapper: React.FC = () => {
   }, [conscienceLevel, isUpdating]);
 
   return (
-    <div className="fixed top-24 right-5 z-40">
-      <TwinFlameIndicator 
-        level={conscienceLevel} 
+    <div className="fixed top-24 right-5 z-40" aria-live="polite">
+      <TwinFlameIndicator
+        level={conscienceLevel}
         isUpdating={isUpdating}
       />
     </div>

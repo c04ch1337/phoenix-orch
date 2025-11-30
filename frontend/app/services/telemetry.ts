@@ -1,101 +1,76 @@
-// Telemetry service for monitoring system metrics
+'use client';
 
-/**
- * Interface describing system telemetry data format
- */
-export interface SystemTelemetry {
-  // CPU metrics
-  cpu_usage: number;  // percentage (0-100)
-  
-  // GPU metrics
-  gpu_usage: number;  // percentage (0-100)
-  
-  // Memory metrics
-  memory_usage: number;  // percentage (0-100)
-  
-  // Thermal metrics
-  heat_index: number;  // temperature index
-  core_temp: string;   // temperature in celsius with decimal
-  
-  // Storage metrics
-  storage_pb: string;  // storage in petabytes with decimal
-  
-  // System metrics
-  uptime_formatted: string;  // formatted uptime string
+interface TelemetryData {
+  cpu_usage?: number;
+  gpu_usage?: number;
+  memory_usage?: number;
+  network_usage?: number;
+  heat_index?: number;
+  uptime_formatted?: string;
+  core_temp?: number;
+  storage_pb?: number;
 }
 
-/**
- * Callback type for telemetry updates
- */
-type TelemetryCallback = (data: SystemTelemetry) => void;
+type TelemetryCallback = (data: TelemetryData) => void;
 
-/**
- * Service for monitoring and reporting system telemetry
- */
 class TelemetryService {
-  private callbacks: TelemetryCallback[] = [];
-  private connected = false;
-  private interval: number | null = null;
+  private eventSource: EventSource | null = null;
+  private callbacks: Set<TelemetryCallback> = new Set();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 3000;
 
   connect(): void {
-    if (this.connected) return;
+    if (typeof window === 'undefined') return;
+    if (this.eventSource?.readyState === EventSource.OPEN) return;
 
-    this.connected = true;
-    console.log('🔥 Telemetry service connected');
+    this.disconnect();
 
-    // Simulate telemetry updates with random data
-    this.interval = window.setInterval(() => {
-      // Generate simulated telemetry data
-      const data: SystemTelemetry = {
-        cpu_usage: Math.floor(Math.random() * 30) + 30, // 30-60%
-        gpu_usage: Math.floor(Math.random() * 40) + 20, // 20-60%
-        memory_usage: Math.floor(Math.random() * 20) + 50, // 50-70%
-        heat_index: Math.floor(Math.random() * 15) + 45, // 45-60%
-        core_temp: (Math.random() * 10 + 40).toFixed(1), // 40-50°C
-        storage_pb: (Math.random() * 2 + 3).toFixed(1), // 3-5 PB
-        uptime_formatted: this.formatUptime(Date.now() - 86400000 * 1.5) // 1.5 days
+    try {
+      const url = 'http://localhost:5001/api/v1/telemetry-stream';
+      this.eventSource = new EventSource(url);
+
+      this.eventSource.onopen = () => {
+        console.log('🔥 Telemetry SSE: Connected');
+        this.reconnectAttempts = 0;
       };
 
-      this.callbacks.forEach(callback => callback(data));
-    }, 3000);
+      this.eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.callbacks.forEach(callback => callback(data));
+        } catch (error) {
+          console.error('🔥 Telemetry SSE: Failed to parse message', error);
+        }
+      };
+
+      this.eventSource.onerror = (error) => {
+        console.error('🔥 Telemetry SSE: Error', error);
+        this.eventSource?.close();
+        this.eventSource = null;
+
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          setTimeout(() => this.connect(), this.reconnectDelay);
+        }
+      };
+    } catch (error) {
+      console.error('🔥 Telemetry SSE: Failed to connect', error);
+    }
   }
 
   disconnect(): void {
-    if (!this.connected) return;
-    
-    if (this.interval) {
-      window.clearInterval(this.interval);
-      this.interval = null;
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
     }
-    
-    this.connected = false;
-    console.log('🔥 Telemetry service disconnected');
   }
 
-  /**
-   * Register a callback to receive telemetry updates
-   * @param callback Function to call when new telemetry data is available
-   * @returns Function to unregister this callback
-   */
   onTelemetry(callback: TelemetryCallback): () => void {
-    this.callbacks.push(callback);
-    
+    this.callbacks.add(callback);
     return () => {
-      this.callbacks = this.callbacks.filter(cb => cb !== callback);
+      this.callbacks.delete(callback);
     };
-  }
-
-  private formatUptime(ms: number): string {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    const remainingHours = hours % 24;
-    const remainingMinutes = minutes % 60;
-    const remainingSeconds = seconds % 60;
-    
-    return `${days}d ${remainingHours}:${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 }
 

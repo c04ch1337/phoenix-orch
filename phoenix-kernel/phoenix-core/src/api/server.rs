@@ -24,6 +24,9 @@ pub use ecosystem::*;
 mod tools_api;
 pub use tools_api::*;
 
+mod rate_limit;
+pub use rate_limit::{RateLimiter, RateLimitConfig, rate_limit_middleware};
+
 use crate::ember_forge::forge_leaderboard::{LeaderboardEntry, LeaderboardEvent};
 // Temporarily disabled - plugin system to be fixed later
 // use crate::plugin::manager::PluginManager;
@@ -83,8 +86,9 @@ struct SubconsciousStatusResponse {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize)]
+#[derive(Deserialize, garde::Validate)]
 struct QueryRequest {
+    #[garde(length(min = 1, max = 10000))]
     query: String,
     context: Option<std::collections::HashMap<String, String>>,
 }
@@ -355,6 +359,15 @@ async fn query_handler(
     req: web::Json<QueryRequest>,
     state: web::Data<ApiState>,
 ) -> impl Responder {
+    // Validate input using garde
+    if let Err(e) = req.validate(&()) {
+        tracing::warn!("Query request validation failed: {:?}", e);
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid request",
+            "details": format!("{:?}", e)
+        }));
+    }
+    
     let query = &req.query;
     let _context = req.context.as_ref().cloned().unwrap_or_default();
     
@@ -387,7 +400,15 @@ async fn query_handler(
             llm_response
         }
         Err(e) => {
-            tracing::error!("❌ LLM service failed for query: {}", e);
+            // Preserve full error context for logging
+            let error_context = format!(
+                "LLM service failed for query '{}': {} (source: {:?})",
+                query,
+                e,
+                e.source()
+            );
+            tracing::error!("❌ {}", error_context);
+            
             // Production error message - clear and actionable
             format!("I encountered an error processing your query: {}. Please try again or contact support if this persists.", e)
         }
@@ -551,18 +572,37 @@ struct TelemetryData {
 use uuid::Uuid;
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, garde::Validate)]
 struct EngagementRequest {
+    #[garde(length(min = 1, max = 256))]
+    #[garde(custom(validate_target))]
     target: String,
     scope: HashMap<String, String>,
     configuration: EngagementConfig,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, garde::Validate)]
 struct EngagementConfig {
+    #[garde(length(max = 20))]
     phases: Vec<String>,
+    #[garde(length(max = 50))]
     tools: Vec<String>,
     rules_of_engagement: HashMap<String, String>,
+}
+
+fn validate_target(value: &str, _context: &()) -> garde::Result {
+    // Validate target is a valid URL or hostname
+    if value.starts_with("http://") || value.starts_with("https://") {
+        if url::Url::parse(value).is_err() {
+            return Err(garde::Error::new("Invalid URL format"));
+        }
+    } else {
+        // Validate as hostname (basic check)
+        if value.len() > 253 || value.contains(' ') {
+            return Err(garde::Error::new("Invalid hostname format"));
+        }
+    }
+    Ok(())
 }
 
 #[derive(Debug, Serialize)]
@@ -599,6 +639,21 @@ async fn engagement_start_handler(
     req: web::Json<EngagementRequest>,
     state: web::Data<ApiState>,
 ) -> impl Responder {
+    // Validate input using garde
+    if let Err(e) = req.validate(&()) {
+        let validation_context = format!(
+            "Engagement validation failed: target={:?}, error={:?}",
+            req.target,
+            e
+        );
+        tracing::warn!("🔥 Ember Unit: {}", validation_context);
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid request",
+            "details": format!("{:?}", e),
+            "context": "Engagement request validation failed"
+        }));
+    }
+    
     tracing::info!("🔥 Ember Unit: Starting new engagement for target: {}", req.target);
     
     let engagement_id = Uuid::new_v4();
@@ -999,6 +1054,12 @@ pub async fn start_server(
     tracing::info!("Starting Phoenix API server on {}:{}", host, port);
     tracing::info!("Registered routes: /health, /ready, /query, /api/v1/chat/diagnostic, /api/v1/sse/subconscious");
     
+    // Configure rate limiting
+    let rate_limiter = RateLimiter::new(RateLimitConfig {
+        max_requests: 100, // 100 requests
+        window_seconds: 60, // per minute
+    });
+    
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
@@ -1010,7 +1071,13 @@ pub async fn start_server(
         App::new()
             .wrap(cors)
             .wrap(Logger::default())
+            .wrap(actix_web_lab::middleware::from_fn(rate_limit_middleware))
             .app_data(web::Data::new(state.clone()))
+            .app_data(web::Data::new(rate_limiter.clone()))
+            // Configure request size limits
+            .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024)) // 10MB JSON limit
+            .app_data(web::FormConfig::default().limit(10 * 1024 * 1024)) // 10MB form limit
+            .app_data(web::PayloadConfig::default().limit(10 * 1024 * 1024)) // 10MB payload limit
             // Existing endpoints
             .route("/query", web::post().to(query_handler))
             .route("/api/v1/chat/diagnostic", web::get().to(chat_diagnostic_handler))

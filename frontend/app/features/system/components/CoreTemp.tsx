@@ -1,11 +1,18 @@
 'use client';
 
+import React from 'react';
 import { Flame } from 'lucide-react';
 
 interface CoreTempProps {
   temp?: number;
 }
 
+/**
+ * CoreTemp component displays the current system core temperature
+ * Changes visual indicators based on temperature thresholds
+ *
+ * @param temp - Current temperature in Celsius, defaults to 48.3°C
+ */
 export default function CoreTemp({ temp = 48.3 }: CoreTempProps) {
   // Determine color based on temperature
   const getTempColor = () => {
@@ -21,9 +28,16 @@ export default function CoreTemp({ temp = 48.3 }: CoreTempProps) {
   const flameAnimation = temp > 70 ? 'animate-pulse' : '';
 
   return (
-    <div className="flex items-center justify-between">
+    <div
+      className="flex items-center justify-between"
+      role="status"
+      aria-label={`Core temperature ${temp.toFixed(1)} degrees Celsius`}
+    >
       <div className="flex items-center space-x-2">
-        <Flame className={`${flameSize} ${flameColor} ${flameAnimation} transition-all duration-300`} />
+        <Flame
+          className={`${flameSize} ${flameColor} ${flameAnimation} transition-all duration-300`}
+          aria-hidden="true"
+        />
         <span className="text-zinc-400">CORE TEMP</span>
       </div>
       <div className="flex items-center">

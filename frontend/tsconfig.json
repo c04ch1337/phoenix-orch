@@ -11,38 +11,25 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "esModuleInterop": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      /* Primary path mapping using Next.js App Router conventions */
-      "@/*": ["app/*"],
-      
-      /* Feature-specific path mappings */
-      "@/components/*": ["app/components/*"],
-      "@/services/*": ["app/services/*"],
-      "@/features/*": ["app/features/*"],
-      "@/types/*": ["app/types/*"],
-      "@/lib/*": ["app/lib/*"],
-      "@/modules/*": ["app/modules/*"],
-      "@/config/*": ["app/config/*"],
-      "@/styles/*": ["app/styles/*"],
-      "@/utils/*": ["app/utils/*"],
-      "@/hooks/*": ["app/hooks/*"],
-      "@/contexts/*": ["app/contexts/*"],
-      
-      /* Legacy paths for backward compatibility - to be removed after migration */
-      "@app/*": ["app/*"],
-      "@components/*": ["app/components/*"],
-      "@services/*": ["app/services/*"],
-      "@features/*": ["app/features/*"],
-      "@phoenix/*": ["app/phoenix/*"],
-      "@tribute/*": ["app/tribute/*"]
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@routes/*": ["src/routes/*"],
+      "@stores/*": ["src/stores/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"],
+      "@tauri/*": ["src/tauri/*"],
+      "@assets/*": ["src/assets/*"],
+      "@styles/*": ["src/styles/*"]
     }
   },
-  "include": ["src", "app", "tests"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

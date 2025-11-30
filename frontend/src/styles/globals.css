@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Phoenix Orch - Global Styles
+ * Custom utility classes that extend Tailwind
+ */
+
+@layer base {
+  html, body {
+    @apply antialiased bg-phoenix-void text-white h-screen w-screen overflow-hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html {
+    @apply font-mono;
+  }
+}
+
+/* Custom scrollbar styling with fallbacks */
+@layer components {
+  /* Webkit browsers */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5;
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-zinc-900;
+    background-color: #18181b;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-red-700;
+    background-color: #b91c1c;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-red-600;
+    background-color: #dc2626;
+  }
+  
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.red.700') theme('colors.zinc.900');
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  /* Delayed animations for sequential effects */
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .delay-600 {
+    animation-delay: 600ms;
+  }
+}

@@ -168,7 +168,7 @@ export const PhoenixConsole: React.FC<PhoenixConsoleProps> = ({
                     <div className="flex items-center gap-2 text-[#E63946]">
                         <Terminal className="w-4 h-4" />
                         <span className="font-bold tracking-wider">
-                            PHOENIX CORE REPL {phoenix.isConnected ? '(CONNECTED)' : '(OFFLINE)'}
+                            PHOENIX CORE REPL {phoenix.connection.isConnected ? '(CONNECTED)' : '(OFFLINE)'}
                         </span>
                     </div>
                     <button onClick={onClose} className="text-zinc-500 hover:text-white">

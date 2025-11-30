@@ -2,9 +2,9 @@
 
 import { useEffect, useCallback, useState } from 'react';
 // WebSocket removed - using SSE only
-import { telemetry } from '@/services/telemetry';
-import { agent } from '@/services/agent';
-import { voice } from '@/services/voice';
+import { telemetry } from '../services/telemetry';
+import { agent } from '../services/agent';
+import { voice } from '../services/voice';
 
 interface ServiceInitializerProps {
   onConnectionChange?: (connected: boolean) => void;

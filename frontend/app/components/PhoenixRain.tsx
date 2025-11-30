@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 interface PhoenixRainProps {
     isWhiteHot?: boolean;
 }
 
+/**
+ * PhoenixRain component creates an animated matrix-like rain effect
+ * with phoenix-themed characters. Supports a standard mode and white-hot mode.
+ *
+ * @param isWhiteHot - Whether to display the rain in white-hot mode
+ */
 export default function PhoenixRain({ isWhiteHot = false }: PhoenixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isWhiteHotRef = useRef(isWhiteHot);
@@ -15,7 +21,27 @@ export default function PhoenixRain({ isWhiteHot = false }: PhoenixRainProps) {
     isWhiteHotRef.current = isWhiteHot;
   }, [isWhiteHot]);
 
+  // Check if user prefers reduced motion
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  
   useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    // Listen for preference changes
+    const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+  
+  useEffect(() => {
+    // Don't run the animation if user prefers reduced motion
+    if (prefersReducedMotion) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -95,14 +121,16 @@ export default function PhoenixRain({ isWhiteHot = false }: PhoenixRainProps) {
       clearInterval(interval);
       window.removeEventListener("resize", handleResize);
     };
-  }, [isWhiteHot]); // Include isWhiteHot dependency since we use isWhiteHotRef which depends on it
+  }, [isWhiteHot, prefersReducedMotion]); // Include all dependencies used within the effect
 
   return (
     <canvas
       ref={canvasRef}
+      aria-hidden="true" // This is decorative content
       className={clsx(
         "fixed inset-0 pointer-events-none z-0 transition-all duration-500 ease-in-out",
         isWhiteHot ? "opacity-80" : "opacity-30",
+        prefersReducedMotion ? "opacity-0" : null, // Hide if reduced motion preferred
         "bg-ashen-void" // Using the ashen-void color for background
       )}
       style={{ mixBlendMode: "screen" }}

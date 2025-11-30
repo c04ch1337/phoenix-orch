@@ -23,8 +23,9 @@ use crate::tools::msf_bridge::MsfBridge;
 // Types
 // ============================================================================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, garde::Validate)]
 pub struct ToolCallRequest {
+    #[garde(length(min = 1, max = 128))]
     pub name: String,
     pub params: ToolParams,
 }
@@ -39,10 +40,25 @@ pub struct ToolCallResponse {
     pub timestamp: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, garde::Validate)]
 pub struct ToolRegisterRequest {
+    #[garde(length(min = 1, max = 256))]
+    #[garde(custom(validate_github_repo))]
     pub github_repo: String,
+    #[garde(length(max = 128))]
     pub name: Option<String>,
+}
+
+fn validate_github_repo(value: &str, _context: &()) -> garde::Result {
+    // Validate GitHub repo format: owner/repo or full URL
+    if value.starts_with("https://github.com/") || value.starts_with("http://github.com/") {
+        if url::Url::parse(value).is_err() {
+            return Err(garde::Error::new("Invalid GitHub URL format"));
+        }
+    } else if !value.contains('/') || value.matches('/').count() != 1 {
+        return Err(garde::Error::new("GitHub repo must be in format 'owner/repo'"));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Serialize)]
@@ -73,6 +89,15 @@ pub async fn tool_call_handler(
     req: web::Json<ToolCallRequest>,
     state: web::Data<ApiState>,
 ) -> impl Responder {
+    // Validate input using garde
+    if let Err(e) = req.validate(&()) {
+        tracing::warn!("Tool call request validation failed: {:?}", e);
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid request",
+            "details": format!("{:?}", e)
+        }));
+    }
+    
     tracing::info!("🔥 Tools Arsenal: Calling tool: {}", req.name);
     
     let call_id = Uuid::new_v4().to_string();
@@ -84,7 +109,13 @@ pub async fn tool_call_handler(
     );
     
     if !conscience_result.approved {
-        tracing::warn!("🔥 Tools Arsenal: Tool call rejected by conscience");
+        let violation_context = format!(
+            "Tool call rejected: tool={}, params={:?}, violations={:?}",
+            req.name,
+            req.params,
+            conscience_result.violations
+        );
+        tracing::warn!("🔥 Tools Arsenal: {}", violation_context);
         return HttpResponse::Forbidden().json(ToolCallResponse {
             call_id,
             tool_name: req.name.clone(),
@@ -168,6 +199,15 @@ pub async fn tool_register_handler(
     req: web::Json<ToolRegisterRequest>,
     state: web::Data<ApiState>,
 ) -> impl Responder {
+    // Validate input using garde
+    if let Err(e) = req.validate(&()) {
+        tracing::warn!("Tool register request validation failed: {:?}", e);
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid request",
+            "details": format!("{:?}", e)
+        }));
+    }
+    
     tracing::info!("🔥 Tools Arsenal: Registering tool from: {}", req.github_repo);
     
     let tool_id = Uuid::new_v4().to_string();

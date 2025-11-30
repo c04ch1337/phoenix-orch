@@ -1,173 +1,185 @@
-// Voice service for speech synthesis and recognition
+'use client';
 
-import { VoiceStatus, VoiceTranscript } from '../types';
+import { VoiceStatus, VoiceTranscript } from '@/types';
 
-type StatusCallback = (status: VoiceStatus) => void;
-type TranscriptCallback = (transcript: VoiceTranscript) => void;
+type VoiceStatusCallback = (status: VoiceStatus) => void;
+type VoiceTranscriptCallback = (result: VoiceTranscript) => void;
 
 class VoiceService {
   private enabled = false;
   private listening = false;
   private speaking = false;
-  
-  private statusCallbacks: StatusCallback[] = [];
-  private transcriptCallbacks: TranscriptCallback[] = [];
-  private recognitionTimeout: number | null = null;
-  
-  // Enable voice features
+  private recognition: SpeechRecognition | null = null;
+  private synthesis: SpeechSynthesis | null = null;
+  private statusCallbacks: Set<VoiceStatusCallback> = new Set();
+  private transcriptCallbacks: Set<VoiceTranscriptCallback> = new Set();
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      this.synthesis = window.speechSynthesis;
+
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const current = event.resultIndex;
+          const transcript = event.results[current][0]?.transcript || '';
+          const isFinal = event.results[current]?.isFinal || false;
+
+          this.transcriptCallbacks.forEach(callback => {
+            callback({
+              transcript,
+              isFinal,
+              confidence: event.results[current][0]?.confidence,
+            });
+          });
+        };
+
+        this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error('🔥 Voice: Recognition error', event.error);
+          if (event.error === 'no-speech' || event.error === 'audio-capture') {
+            this.listening = false;
+            this.notifyStatusChange();
+          }
+        };
+
+        this.recognition.onend = () => {
+          if (this.enabled && this.listening) {
+            try {
+              this.recognition?.start();
+            } catch (error) {
+              console.error('🔥 Voice: Failed to restart recognition', error);
+              this.listening = false;
+              this.notifyStatusChange();
+            }
+          } else {
+            this.listening = false;
+            this.notifyStatusChange();
+          }
+        };
+      }
+    }
+  }
+
   enable(): void {
+    if (this.enabled) return;
     this.enabled = true;
     this.notifyStatusChange();
-    console.log('🔥 Voice services enabled');
   }
-  
-  // Disable voice features
+
   disable(): void {
+    if (!this.enabled) return;
     this.enabled = false;
     this.stopListening();
+    this.stopSpeaking();
     this.notifyStatusChange();
-    console.log('🔥 Voice services disabled');
   }
-  
-  // Start or stop listening
+
   toggleListening(): void {
-    if (!this.enabled) return;
-    
+    if (!this.enabled) {
+      this.enable();
+    }
+
     if (this.listening) {
       this.stopListening();
     } else {
       this.startListening();
     }
   }
-  
-  // Speak text using speech synthesis
+
+  private startListening(): void {
+    if (!this.recognition || this.listening) return;
+
+    try {
+      this.recognition.start();
+      this.listening = true;
+      this.notifyStatusChange();
+    } catch (error) {
+      console.error('🔥 Voice: Failed to start listening', error);
+      this.listening = false;
+      this.notifyStatusChange();
+    }
+  }
+
+  private stopListening(): void {
+    if (!this.recognition || !this.listening) return;
+
+    try {
+      this.recognition.stop();
+      this.listening = false;
+      this.notifyStatusChange();
+    } catch (error) {
+      console.error('🔥 Voice: Failed to stop listening', error);
+    }
+  }
+
   speak(text: string): void {
-    if (!this.enabled) return;
-    
-    console.log(`🔥 Speaking: ${text}`);
-    this.speaking = true;
-    this.notifyStatusChange();
-    
-    // Simulate speech synthesis with random durations based on text length
-    const duration = Math.max(1000, text.length * 50);
-    
-    setTimeout(() => {
+    if (!this.enabled || !this.synthesis) return;
+
+    this.stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+      this.speaking = true;
+      this.notifyStatusChange();
+    };
+
+    utterance.onend = () => {
       this.speaking = false;
       this.notifyStatusChange();
-    }, duration);
+    };
+
+    utterance.onerror = (error) => {
+      console.error('🔥 Voice: Synthesis error', error);
+      this.speaking = false;
+      this.notifyStatusChange();
+    };
+
+    this.synthesis.speak(utterance);
   }
-  
-  // Register for voice status changes
-  onStatusChange(callback: StatusCallback): () => void {
-    this.statusCallbacks.push(callback);
-    
-    // Immediately call with current status
+
+  private stopSpeaking(): void {
+    if (this.synthesis && this.speaking) {
+      this.synthesis.cancel();
+      this.speaking = false;
+      this.notifyStatusChange();
+    }
+  }
+
+  onStatusChange(callback: VoiceStatusCallback): () => void {
+    this.statusCallbacks.add(callback);
     callback(this.getStatus());
-    
     return () => {
-      this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
+      this.statusCallbacks.delete(callback);
     };
   }
-  
-  // Register for transcript updates
-  onTranscript(callback: TranscriptCallback): () => void {
-    this.transcriptCallbacks.push(callback);
-    
+
+  onTranscript(callback: VoiceTranscriptCallback): () => void {
+    this.transcriptCallbacks.add(callback);
     return () => {
-      this.transcriptCallbacks = this.transcriptCallbacks.filter(cb => cb !== callback);
+      this.transcriptCallbacks.delete(callback);
     };
   }
-  
-  // Get current voice status
-  private getStatus(): VoiceStatus {
-    return {
-      enabled: this.enabled,
-      listening: this.listening,
-      speaking: this.speaking
-    };
-  }
-  
-  // Notify all listeners about status changes
+
   private notifyStatusChange(): void {
     const status = this.getStatus();
     this.statusCallbacks.forEach(callback => callback(status));
   }
-  
-  // Start listening for voice input
-  private startListening(): void {
-    this.listening = true;
-    this.notifyStatusChange();
-    console.log('🔥 Started listening');
-    
-    // Simulate voice recognition with random phrases
-    this.simulateRecognition();
-  }
-  
-  // Stop listening for voice input
-  private stopListening(): void {
-    this.listening = false;
-    this.notifyStatusChange();
-    console.log('🔥 Stopped listening');
-    
-    if (this.recognitionTimeout) {
-      clearTimeout(this.recognitionTimeout);
-      this.recognitionTimeout = null;
-    }
-  }
-  
-  // Simulate voice recognition with sample phrases
-  private simulateRecognition(): void {
-    if (!this.listening) return;
-    
-    const duration = Math.random() * 5000 + 3000; // 3-8 seconds
-    
-    this.recognitionTimeout = window.setTimeout(() => {
-      if (!this.listening) return;
-      
-      // Simulate partial results
-      const partialResult: VoiceTranscript = {
-        transcript: this.getRandomPhrase() + '...',
-        isFinal: false,
-        confidence: 0.6
-      };
-      
-      this.transcriptCallbacks.forEach(callback => callback(partialResult));
-      
-      // Simulate final result after a short delay
-      setTimeout(() => {
-        if (!this.listening) return;
-        
-        const finalResult: VoiceTranscript = {
-          transcript: this.getRandomPhrase(),
-          isFinal: true,
-          confidence: 0.9
-        };
-        
-        this.transcriptCallbacks.forEach(callback => callback(finalResult));
-        
-        // Continue with simulation
-        this.simulateRecognition();
-      }, 800);
-    }, duration);
-  }
-  
-  // Generate random voice command for simulation
-  private getRandomPhrase(): string {
-    const phrases = [
-      'System status report',
-      'Activate defense protocols',
-      'Show me recent communications',
-      'What is the current threat level',
-      'Run diagnostics on core systems',
-      'Increase security level to maximum',
-      'Begin memory backup sequence',
-      'Check external network connections',
-      'Analyze recent data patterns',
-      'Deploy countermeasures immediately',
-      'Spawn NotebookLM'
-    ];
-    
-    return phrases[Math.floor(Math.random() * phrases.length)];
+
+  private getStatus(): VoiceStatus {
+    return {
+      enabled: this.enabled,
+      listening: this.listening,
+      speaking: this.speaking,
+    };
   }
 }
 

@@ -15,9 +15,26 @@ describe('DefenseDashboard', () => {
     send: jest.fn(),
     close: jest.fn(),
   };
+  
+  // Store the message handler outside for easier access
+  let messageHandler: (message: string) => void;
 
   beforeEach(() => {
+    // Reset mocks
+    mockSocket.on.mockReset();
+    mockSocket.send.mockReset();
+    mockSocket.close.mockReset();
+    
+    // Setup the useWebSocket mock
     (useWebSocket as jest.Mock).mockReturnValue(mockSocket);
+    
+    // Setup the message handler capture
+    mockSocket.on.mockImplementation((event, callback) => {
+      if (event === 'message') {
+        messageHandler = callback;
+      }
+      return mockSocket;
+    });
   });
 
   afterEach(() => {
@@ -34,8 +51,6 @@ describe('DefenseDashboard', () => {
   });
 
   it('handles incoming threat detection', async () => {
-    render(<DefenseDashboard />);
-
     const mockThreat = {
       type: 'ThreatDetected',
       data: {
@@ -47,11 +62,10 @@ describe('DefenseDashboard', () => {
       },
     };
 
+    render(<DefenseDashboard />);
+    
     // Simulate WebSocket message
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockThreat));
     });
 
@@ -62,8 +76,6 @@ describe('DefenseDashboard', () => {
   });
 
   it('handles incident updates', async () => {
-    render(<DefenseDashboard />);
-
     const mockIncident = {
       type: 'IncidentUpdate',
       data: {
@@ -83,9 +95,6 @@ describe('DefenseDashboard', () => {
     };
 
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockIncident));
     });
 
@@ -95,8 +104,6 @@ describe('DefenseDashboard', () => {
   });
 
   it('handles metrics updates', async () => {
-    render(<DefenseDashboard />);
-
     const mockMetrics = {
       type: 'MetricsUpdate',
       data: {
@@ -109,9 +116,6 @@ describe('DefenseDashboard', () => {
     };
 
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockMetrics));
     });
 
@@ -123,9 +127,8 @@ describe('DefenseDashboard', () => {
 
   it('handles response actions', async () => {
     const mockExecute = jest.fn();
-    render(<DefenseDashboard onExecuteAction={mockExecute} />);
-
-    // Simulate an incident
+    
+    // Define the test data first
     const mockIncident = {
       type: 'IncidentUpdate',
       data: {
@@ -145,9 +148,6 @@ describe('DefenseDashboard', () => {
     };
 
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockIncident));
     });
 
@@ -164,8 +164,6 @@ describe('DefenseDashboard', () => {
   });
 
   it('handles evidence display', async () => {
-    render(<DefenseDashboard />);
-
     const mockEvidence = {
       type: 'EvidenceCollected',
       data: {
@@ -179,9 +177,6 @@ describe('DefenseDashboard', () => {
     };
 
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockEvidence));
     });
 
@@ -192,8 +187,6 @@ describe('DefenseDashboard', () => {
   });
 
   it('handles system status updates', async () => {
-    render(<DefenseDashboard />);
-
     const mockStatus = {
       type: 'SystemStatus',
       data: {
@@ -205,9 +198,6 @@ describe('DefenseDashboard', () => {
     };
 
     act(() => {
-      const messageHandler = mockSocket.on.mock.calls.find(
-        call => call[0] === 'message'
-      )[1];
       messageHandler(JSON.stringify(mockStatus));
     });
 

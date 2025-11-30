@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
     PanelLeft,
     PanelRight,
@@ -8,8 +9,7 @@ import {
     Network,
     Flame
 } from 'lucide-react';
-// Zustand removed - using PhoenixContext only
-// TODO: Replace with PhoenixContext hook when implemented
+import { usePhoenixContext } from '../hooks/usePhoenixContext';
 
 /**
  * Optional props that can override context-based defaults
@@ -28,13 +28,14 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
     onSidebarToggle,
     onRightPanelToggle,
     onOpenConsole
-}: ConscienceGaugeProps) => {
-    // TODO: Replace with PhoenixContext hook when implemented
-    // Temporary defaults until PhoenixContext is created
-    const conscienceStability = 97; // Default conscience level
-    const isOffline = false; // Will be set from PhoenixContext
-    const userName = 'DAD'; // Will be set from PhoenixContext
-    const subconsciousActive = false; // Will be set from PhoenixContext
+}) => {
+    const phoenix = usePhoenixContext();
+    
+    // Extract values from Phoenix context
+    const conscienceStability = phoenix.settings.conscienceLevel;
+    const isOffline = !phoenix.connection.isConnected;
+    const userName = phoenix.user.name || 'DAD';
+    const subconsciousActive = phoenix.subconscious.active;
     
     // Using callback functions from props or defaults
     const handleSidebarToggle = onSidebarToggle || (() => console.log('Toggle sidebar'));
@@ -52,6 +53,7 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
                     onClick={handleSidebarToggle}
                     className="p-2 text-zinc-500 hover:text-white transition-colors"
                     title="Toggle Army Panel"
+                    aria-label="Toggle Army Panel"
                 >
                     <PanelLeft className="w-5 h-5" />
                 </button>
@@ -59,6 +61,7 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
                 <button
                     onClick={handleOpenConsole}
                     className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-zinc-500 hover:text-white transition-colors border border-zinc-800 rounded"
+                    aria-label="Open Console"
                 >
                     <Terminal className="w-3.5 h-3.5" />
                     <span>REPL</span>
@@ -95,6 +98,7 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
                     onClick={handleRightPanelToggle}
                     className="p-2 text-zinc-500 hover:text-white transition-colors"
                     title="Toggle Digital Twin"
+                    aria-label="Toggle Digital Twin"
                 >
                     <PanelRight className="w-5 h-5" />
                 </button>
@@ -102,13 +106,18 @@ const ConscienceGauge: React.FC<ConscienceGaugeProps> = ({
 
             {/* Bottom Progress Bar */}
             <div className="absolute bottom-0 left-0 w-full h-[1px] bg-zinc-900">
-                <div 
+                <div
                     className="h-full transition-all duration-1000 ease-out"
-                    style={{ 
+                    style={{
                         width: `${conscienceStability}%`,
                         backgroundColor: isUnstable ? '#b91c1c' : '#E63946'
                     }}
-                ></div>
+                    role="progressbar"
+                    aria-valuenow={conscienceStability}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Conscience stability level"
+                />
             </div>
         </div>
     );
