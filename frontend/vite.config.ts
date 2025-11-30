@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,7 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Load env file based on mode
+  const env = loadEnv(mode, process.cwd(), '');
+  
+  return {
   plugins: [react()],
   define: {
     __DEFINES__: JSON.stringify({
@@ -29,14 +33,15 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5000,
+    port: Number(env.FRONTEND_DEV_PORT) || 5000,
     strictPort: true,
     proxy: {
       '/api/sse': {
-        target: 'http://127.0.0.1:5001',
+        target: `http://127.0.0.1:${env.BACKEND_PORT || 5001}`,
         changeOrigin: true,
         secure: false
       }
     }
   }
+  };
 });

@@ -9,7 +9,11 @@ pub mod context;
 pub mod conscience;
 pub mod errors;
 pub mod tauri;
-pub mod tools;
+// tools.rs contains the ToolRegistry implementation
+pub mod tools as tool_registry;
+pub mod tools {
+    pub mod chat;
+}
 pub mod types;
 pub mod vector;
 
@@ -18,7 +22,15 @@ pub mod tests;
 
 // Re-export key types for convenience
 pub use agent::OrchestratorAgent;
-pub use tools::{Tool, ToolRegistry, ToolParameters, ToolResult, BoxedTool};
+pub use tool_registry::{Tool, ToolRegistry, ToolParameters, ToolResult, BoxedTool, ToolExecutionContext};
+
+// Re-export tool types under tools:: for backward compatibility
+pub mod tools {
+    pub use super::tool_registry::{Tool, ToolParameters, ToolResult, BoxedTool};
+    pub mod chat {
+        pub use super::super::tools::chat::ChatTool;
+    }
+}
 pub use errors::{PhoenixResult, PhoenixError, AgentErrorKind};
 pub use types::{
     ConscienceRequest, ConscienceResult, RequestId, RequestOrigin,

@@ -27,8 +27,10 @@ async fn initialize_sse_connection(app_handle: tauri::AppHandle) -> Result<(), S
     let app_handle_clone = app_handle.clone();
     
     spawn(async move {
-        // Start SSE server on port 5001
-        let sse_server = modules::sse::start_server(5001).await
+        // Start SSE server using port from environment or default to 5001
+        let port = std::env::var("BACKEND_PORT").unwrap_or("5001".into());
+        let port = port.parse::<u16>().unwrap_or(5001);
+        let sse_server = modules::sse::start_server(port).await
             .map_err(|e| format!("Failed to start SSE server: {}", e))?;
             
         // Store SSE server in app state for later use

@@ -10,7 +10,7 @@ use std::time::SystemTime;
 use crate::modules::orchestrator::errors::{PhoenixResult, PhoenixError, AgentErrorKind};
 use crate::modules::orchestrator::context::{PhoenixContext, KnowledgeBaseType};
 use crate::modules::orchestrator::conscience::{ConscienceGate, ConscienceConfig, HumanReviewService};
-use crate::modules::orchestrator::tools::{ToolResult, ToolParameters};
+use crate::modules::orchestrator::tool_registry::{ToolResult, ToolParameters, Tool};
 use crate::modules::orchestrator::vector::{VectorSearchConfig, SearchResult};
 use crate::modules::orchestrator::types::{
     ConscienceRequest, ConscienceResult, RequestId, RequestOrigin, HitmStatus
@@ -129,14 +129,21 @@ impl OrchestratorAgent {
         // Initialize agent state
         let state = AgentState::new();
         
-        Ok(Self {
+        // Create agent instance
+        let agent = Self {
             context: context_arc,
             conscience_gate: Arc::new(RwLock::new(conscience_gate)),
             vector_engine: Arc::new(RwLock::new(vector_engine)),
             tool_registry: Arc::new(RwLock::new(tool_registry)),
             config,
             state: Arc::new(RwLock::new(state)),
-        })
+        };
+        
+        // Register default chat tool
+        use crate::modules::orchestrator::tools::chat::ChatTool;
+        agent.add_tool("chat", ChatTool::new())?;
+        
+        Ok(agent)
     }
     
     /// Register a tool with the agent's tool registry
@@ -227,7 +234,16 @@ impl OrchestratorAgent {
         }
         
         // Execute the tool
-        let result = registry.execute_tool(tool_id, params).await?;
+        use crate::modules::orchestrator::tool_registry::ToolExecutionContext;
+        let context = ToolExecutionContext {
+            execution_id: uuid::Uuid::new_v4().to_string(),
+            request_id: Some(RequestId::new()),
+            user_id: None,
+            origin: RequestOrigin::User,
+            context: HashMap::new(),
+            timestamp: SystemTime::now(),
+        };
+        let result = registry.execute_tool(tool_id, params, Some(context)).await?;
         
         // Return serialized result
         Ok(serde_json::to_string(&result)
@@ -450,5 +466,70 @@ impl OrchestratorAgent {
         let memory_id = context.store_memory(kb_type, content.to_string(), metadata, Some(embedding)).await?;
         
         Ok(memory_id)
+    }
+    
+    /// Run a task through the OrchestratorAgent
+    ///
+    /// This is the primary method for executing tasks. It:
+    /// 1. Validates the task through the conscience gate
+    /// 2. Searches memory for relevant context
+    /// 3. Executes the appropriate tool (defaults to "chat" if no specific tool is requested)
+    /// 4. Returns the result
+    ///
+    /// # Arguments
+    ///
+    /// * `goal` - The task description or goal to accomplish
+    ///
+    /// # Returns
+    ///
+    /// A result string containing the task execution result
+    pub async fn run_task(&self, goal: String) -> PhoenixResult<String> {
+        // Update agent state
+        {
+            let mut state = self.state.write().map_err(|e| PhoenixError::Agent {
+                kind: AgentErrorKind::SerializationError,
+                message: format!("Failed to acquire write lock on agent state: {}", e),
+                component: "OrchestratorAgent".to_string(),
+            })?;
+            state.status = "processing_task".to_string();
+        }
+        
+        // Search memory for relevant context
+        let context_results = self.search_memory(&goal, Some(5)).await.unwrap_or_else(|_| "[]".to_string());
+        
+        // Default to chat tool if no specific tool is requested
+        let tool_name = if goal.to_lowercase().starts_with("execute ") || goal.to_lowercase().starts_with("run ") {
+            // Extract tool name from command
+            let parts: Vec<&str> = goal.split_whitespace().collect();
+            if parts.len() >= 2 {
+                parts[1]
+            } else {
+                "chat"
+            }
+        } else {
+            "chat"
+        };
+        
+        // Prepare parameters with goal and context
+        let params = format!(
+            r#"{{"goal": "{}", "context": {}}}"#,
+            goal,
+            context_results
+        );
+        
+        // Execute the tool
+        let result = self.execute_tool(tool_name, &params).await?;
+        
+        // Update agent state
+        {
+            let mut state = self.state.write().map_err(|e| PhoenixError::Agent {
+                kind: AgentErrorKind::SerializationError,
+                message: format!("Failed to acquire write lock on agent state: {}", e),
+                component: "OrchestratorAgent".to_string(),
+            })?;
+            state.status = "idle".to_string();
+        }
+        
+        Ok(result)
     }
 }
