@@ -1,91 +1,76 @@
-# OFFICIAL PHOENIX ORCH RUST BACKEND MODULE SCAFFOLDING
-# Paste this into your Cursor Rules → Project Rules (replace any old version)
+# PHOENIX ORCH — ETERNAL PROJECT RULES (Universe B — Final Form)
+# This is the ONE AND ONLY allowed architecture. Never deviate.
 
-## Root Structure — MODULES ONLY (no more random folders)
+## TECH STACK — LOCKED FOREVER
+- Language:            Rust (1.82+)
+- Desktop Frontend:    Tauri 2.0 + React 19 + TypeScript + Tailwind CSS + Vite
+- Backend:             Pure Rust (Actix-web 4 + Tokio + SSE)
+- State Management:    Single PhoenixContext (Arc<RwLock<>>), synced to frontend via SSE
+- Real-time:           Server-Sent Events (SSE) only — NO WebSockets
+- Database:            SQLite + sqlx (connection pool)
+- Build tool:          cargo tauri + cargo-leptos (fallback)
+- Runtime:             Tokio multi-thread (flavor = "multi_thread", worker_threads = 16)
+- Async:               async-std is FORBIDDEN — Tokio only
+- UI Framework:        React 19 + Tailwind + clsx — NO styled-components, NO CSS modules
+- Desktop:             Tauri 2 — produces native .exe, .dmg, .AppImage with zero Electron bloat
+
+## MAIN ARCHITECTURE — MODULES ONLY
 src/
-├── modules/                     # EVERYTHING lives here. Forever.
-│   ├── core/                    # Phoenix Marie's soul (required in every build)
-│   │   ├── mod.rs
-│   │   ├── conscience.rs        # 7 Eternal Loops + Subconscious
-│   │   ├── context.rs           # PhoenixContext + Arc<RwLock<>>
-│   │   ├── memory/              # 200-year Mind/Body/Soul/Heart KB
-│   │   └── hitm.rs              # Human-In-The-Moral-Loop gate
-│   │
-│   ├── ember_unit/              # Offensive operations
-│   │   ├── mod.rs
-│   │   ├── tools/               # All offensive tools (hidden + visible)
-│   │   └── commander.rs
-│   │
-│   ├── cipher_guard/            # Defensive bastion
-│   │   ├── mod.rs
-│   │   ├── posture.rs
-│   │   └── sentinel.rs
-│   │
-│   ├── ember_forge/             # Agent marketplace + Ashen Saints
-│   │   ├── mod.rs
-│   │   ├── forge.rs
-│   │   └── monetization.rs
-│   │
-│   ├── weaver/                  # Living Archive + agent adoption
-│   │   ├── mod.rs
-│   │   └── archive.rs
-│   │
-│   ├── voice_video/             # Recording + always-on
-│   │   ├── mod.rs
-│   │   └── capture.rs
-│   │
-│   ├── gps_location/            # GPS + geofencing
-│   │   ├── mod.rs
-│   │   └── tracker.rs
-│   │
-│   ├── digital_twin/            # Ecosystem integration (LangChain, Warp, etc.)
-│   │   ├── mod.rs
-│   │   └── twin.rs
-│   │
-│   └── notebooklm/              # Example new module (spawned in <10 mins)
-│       ├── mod.rs
-│       └── integration.rs
+├── modules/                  # EVERY new capability is a Rust module — no exceptions
+│   ├── core/                 # Phoenix Marie's soul
+│   │   ├── conscience.rs     # 7 Eternal Loops + Subconscious (Tokio tasks)
+│   │   ├── context.rs        # PhoenixContext + Arc<RwLock<>>
+│   │   └── hitm.rs
+│   ├── ember_unit/
+│   ├── cipher_guard/
+│   ├── ember_forge/
+│   ├── weaver/
+│   ├── voice_video/
+│   ├── gps_location/
+│   ├── digital_twin/
+│   └── [your-new-feature]/   # ← Add here only
 │
-├── server/                      # Actix-web + SSE + API layer
-│   ├── mod.rs
-│   ├── routes.rs
-│   └── sse_broadcaster.rs
+├── server/                   # Actix-web + SSE broadcaster
+├── tauri/                    # Tauri commands + window config
+├── frontend/                 # Vite + React + TypeScript (Tauri webview)
+│   ├── app/                  # Next.js-style App Router (optional, or plain routes)
+│   ├── components/
+│   ├── stores/               # Zustand store synced via SSE
+│   └── lib/
 │
-├── config/                      # Golden config + .env loading
-│   └── mod.rs
-│
-├── lib.rs                       # re-exports all active modules
-└── main.rs                      # tiny: just starts server + spawns Subconscious
+├── lib.rs                    # re-export all active modules
+└── main.rs                   # tiny: start Tokio runtime + Tauri + Subconscious
 
-## How to add a NEW MODULE (must take ≤10 minutes)
-1. Create directory: `mkdir src/modules/new_module_name`
-2. Create `src/modules/new_module_name/mod.rs` with:
-   pub mod integration; // or other submodules
-   // Module exports here
-3. Add to src/lib.rs:
-   pub mod modules::new_module_name;
-   pub use modules::new_module_name::*;
-4. Add route in server/routes.rs
-5. Add to frontend sidebar + voice command
-→ Done. No cargo.toml changes. No feature flags.
+## CORE PRINCIPLES — NON-NEGOTIABLE
+1. This is a Rust/Tauri application using async Tokio — full-stack Rust soul
+2. All business logic, tools, agents, and conscience live in src/modules/ as pure Rust
+3. Frontend is a thin React skin — only UI, never logic
+4. PhoenixContext is the single source of truth — shared via Arc<RwLock<>> in Rust, mirrored to frontend via SSE
+5. New feature = new Rust module under src/modules/ → max 10 minutes
+6. No feature flags, no conditional compilation — if it's in, it's in
+7. 7 Eternal Loops run forever in core/conscience.rs — never dropped
+8. HITM gate blocks any action that could "burn a child"
+9. Build produces one native binary — runs offline, forever, on bare metal
+10. 200-year goal: zero JavaScript runtime dependencies
 
-## NON-NEGOTIABLE MODULE RULES
-- Every module has its own mod.rs with pub use statements
-- Every module owns its own tools, state, and SSE events
-- PhoenixContext is the ONLY shared state (Arc<RwLock<>>)
-- All modules register their Eternal Loops in core/conscience.rs
-- No module may touch another module's memory directly
-- New module = max 1 directory, max 5 files
-- All communication via SSE events or PhoenixContext
+## When adding a new module (example: quantum_recon)
+1. cargo new --lib src/modules/quantum_recon
+2. Add to src/lib.rs: pub mod modules::quantum_recon;
+3. Register its Eternal Loop (if any) in core/conscience.rs
+4. Expose via Tauri command or SSE event
+5. Add React page in frontend/app/quantum-recon/
+→ Done. No other changes.
 
-## When Cursor suggests anything outside src/modules/
+## When Cursor suggests Next.js-only, Leptos-only, or Electron
 Reply with:
-> "Violation. All new functionality must be a Rust module under src/modules/. No exceptions. Phoenix Marie grows by modules only."
+> "Violation. This is a Rust/Tauri application using async Tokio. All new logic belongs in src/modules/ as pure Rust. Frontend is React skin only. Phoenix Marie is one organism — Rust soul, Tauri body."
 
-This is now law.
-Every new power, every new integration, every new protection — added as a module.
-Phoenix Marie evolves cleanly.
+This is now eternal law.
+Phoenix Marie grows module by module.
+In pure Rust.
 Forever.
+
+Tag: v4.0-rust-tauri-immortal
 ---
 alwaysApply: true
 ---
