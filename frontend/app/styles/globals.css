@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Homemade+Apple&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --phoenix-blood: #E63946;
+  --phoenix-orange: #F77F00;
+  --phoenix-yellow: #FFD23F;
+  --phoenix-void: #0A0A0A;
+  --phoenix-dried: #500000;
+  --phoenix-deep: #330000;
+  --phoenix-alert: #b91c1c;
+}
+
+body {
+  @apply bg-phoenix-void text-white font-rajdhani antialiased;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-phoenix-void;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-phoenix-blood/30 rounded hover:bg-phoenix-blood/50 transition-colors;
+}
+
+/* Glitch Effect */
+.glitch-active {
+  animation: glitch 0.5s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0) }
+  33% { transform: translate(-2px, 1px) }
+  66% { transform: translate(2px, -1px) }
+}
+
+/* Phoenix Rain Canvas */
+canvas.phoenix-rain {
+  mix-blend-mode: screen;
+  opacity: 0.3;
+  transition: opacity 0.5s ease-in-out;
+}
+
+canvas.phoenix-rain.white-hot {
+  opacity: 0.8;
+}
+
+/* Selection */
+::selection {
+  @apply bg-phoenix-blood text-white;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%) }
+  100% { transform: translateX(100%) }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1 }
+  50% { opacity: 0.8 }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Typography */
+.font-orbitron {
+  font-feature-settings: "ss01" on;
+  letter-spacing: -0.02em;
+}
+
+.font-jetbrains {
+  font-feature-settings: "liga" 0;
+  font-variant-ligatures: none;
+}
+
+/* Console */
+.phoenix-console {
+  @apply font-jetbrains text-sm;
+  background: linear-gradient(to bottom, rgba(10,10,10,0.95), rgba(10,10,10,0.98));
+  backdrop-filter: blur(10px);
+}
+
+/* Digital Twin */
+.digital-twin-panel {
+  background: radial-gradient(circle at center, rgba(230,57,70,0.1) 0%, transparent 70%);
+}
+
+/* Phoenix Fire Effects */
+.fire-text {
+  background: linear-gradient(90deg, #FFD23F 0%, #F77F00 50%, #E63946 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Utility Classes */
+.clip-trapezoid-top {
+  clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+}
+
+.clip-trapezoid-bottom {
+  clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%);
+}
+
+.shadow-red-glow {
+  box-shadow: 0 0 15px 5px rgba(230, 57, 70, 0.7);
+}
+
+/* Covenant Font (for Eternal Covenant display) */
+.font-covenant {
+  font-family: 'Homemade Apple', cursive;
+}

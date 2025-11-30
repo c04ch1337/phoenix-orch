@@ -1,0 +1,29 @@
+.phoenix-context-panel {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 1rem;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.context-metric {
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flame-meter {
+  width: 150px;
+  height: 20px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.flame-level {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4d4d, #ff9966);
+  transition: width 0.3s ease;
+}

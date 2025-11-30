@@ -1,61 +1,11 @@
-@import "tailwindcss";
+/*
+ * Phoenix Global Styles - Next.js App Router Version
+ *
+ * Main styling file for the entire Phoenix application
+ */
 
-:root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --phoenix-black: #000000;
-  --phoenix-red: #B80000;
-  --phoenix-orange: #FF4500;
-  --phoenix-yellow: #FFD700;
-  --phoenix-maroon: #8B0000;
-  --phoenix-dark: #1a1a2e;
-  --phoenix-darker: #16213e;
-}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Homemade+Apple&display=swap');
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-phoenix-black: var(--phoenix-black);
-  --color-phoenix-red: var(--phoenix-red);
-  --color-phoenix-orange: var(--phoenix-orange);
-  --color-phoenix-yellow: var(--phoenix-yellow);
-  --color-phoenix-maroon: var(--phoenix-maroon);
-  --color-phoenix-dark: var(--phoenix-dark);
-  --color-phoenix-darker: var(--phoenix-darker);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  
-  /* Phoenix Animations */
-  --animate-breathe: breathe 4s ease-in-out infinite;
-  --animate-candle: flicker 2s ease-in-out infinite;
-}
-
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
-@keyframes flicker {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-body {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-}
-
-.fire-text {
-  color: var(--phoenix-yellow);
-  text-shadow: 0 0 5px var(--phoenix-orange), 0 0 10px var(--phoenix-red);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

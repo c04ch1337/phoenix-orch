@@ -1,34 +1,43 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
     "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react-jsx",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "esModuleInterop": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      /* Original paths for backward compatibility */
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@services/*": ["src/services/*"],
+      "@phoenix/*": ["src/phoenix/*"],
+      "@tribute/*": ["src/tribute/*"],
+      "@types/*": ["src/types/*"],
+      
+      /* New paths for app directory */
+      "@app/*": ["app/*"],
+      "@app/components/*": ["app/components/*"],
+      "@app/services/*": ["app/services/*"],
+      "@app/types/*": ["app/types/*"],
+      "@app/lib/*": ["app/lib/*"],
+      "@app/modules/*": ["app/modules/*"],
+      "@app/config/*": ["app/config/*"],
+      "@app/styles/*": ["app/styles/*"],
+      "@app/phoenix/*": ["app/phoenix/*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["src", "app", "tests"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

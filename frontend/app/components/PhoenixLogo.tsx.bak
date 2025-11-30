@@ -1,0 +1,69 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useHoverTimer } from '../../features/eternal-covenant/hooks/useHoverTimer';
+import { useTripleClick } from '../../features/eternal-covenant/hooks/useTripleClick';
+import { CovenantDisplay } from '../../features/eternal-covenant/components/CovenantDisplay';
+
+interface PhoenixLogoProps {
+  className?: string;
+}
+
+export const PhoenixLogo: React.FC<PhoenixLogoProps> = ({ className }) => {
+  const { handleMouseEnter, handleMouseLeave, isHovering } = useHoverTimer();
+  const { handleClick, isTripleClicked, resetClicks } = useTripleClick();
+  const [showCovenant, setShowCovenant] = useState(false);
+
+  // Watch for triple-click state changes
+  useEffect(() => {
+    console.log('🔥 Phoenix Logo: isTripleClicked changed:', isTripleClicked);
+    if (isTripleClicked) {
+      console.log('🔥 Phoenix Logo: Triple-click detected! Showing covenant...');
+      setShowCovenant(true);
+    }
+  }, [isTripleClicked]);
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    console.log('🔥 Phoenix Logo: Click detected');
+    handleClick();
+  };
+
+  const handleCovenantDismiss = () => {
+    setShowCovenant(false);
+    resetClicks();
+  };
+
+  const containerClass = className || "fixed top-4 left-4 z-50 cursor-pointer";
+
+  return (
+    <>
+      <div
+        className={containerClass}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleLogoClick}
+        style={{ pointerEvents: 'auto' }}
+      >
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`transition-colors duration-700 ease-in-out ${
+          isHovering ? 'text-white' : 'text-[#ff4500]'
+        }`}
+      >
+        <path
+          d="M20 2C10.059 2 2 10.059 2 20s8.059 18 18 18 18-8.059 18-18S29.941 2 20 2zm0 32c-7.732 0-14-6.268-14-14S12.268 6 20 6s14 6.268 14 14-6.268 14-14 14zm7-14c0 3.866-3.134 7-7 7s-7-3.134-7-7 3.134-7 7-7 7 3.134 7 7z"
+          fill="currentColor"
+        />
+      </svg>
+      </div>
+      <CovenantDisplay
+        isVisible={showCovenant}
+        onDismiss={handleCovenantDismiss}
+      />
+    </>
+  );
+};
