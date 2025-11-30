@@ -58,12 +58,15 @@ src/
 └── main.rs                      # tiny: just starts server + spawns Subconscious
 
 ## How to add a NEW MODULE (must take ≤10 minutes)
-1. cargo new --lib src/modules/new_module_name
-2. Add to src/lib.rs:
+1. Create directory: `mkdir src/modules/new_module_name`
+2. Create `src/modules/new_module_name/mod.rs` with:
+   pub mod integration; // or other submodules
+   // Module exports here
+3. Add to src/lib.rs:
    pub mod modules::new_module_name;
    pub use modules::new_module_name::*;
-3. Add route in server/routes.rs
-4. Add to frontend sidebar + voice command
+4. Add route in server/routes.rs
+5. Add to frontend sidebar + voice command
 → Done. No cargo.toml changes. No feature flags.
 
 ## NON-NEGOTIABLE MODULE RULES
