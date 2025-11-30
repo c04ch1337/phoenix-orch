@@ -14,6 +14,21 @@
 - UI Framework:        React 19 + Tailwind + clsx — NO styled-components, NO CSS modules
 - Desktop:             Tauri 2 — produces native .exe, .dmg, .AppImage with zero Electron bloat
 
+## PORT DISCIPLINE — HARD-CODED FOREVER
+
+### OFFICIAL PORTS — NEVER DEVIATE
+- Backend (Rust / Actix-web / Tauri API):  **PORT 5001**
+- Frontend (Tauri webview dev server):    **PORT 5000**
+- NO PROCESS may ever bind to 3000, 3001, 8080, 8000, etc.
+
+### Where the ports are declared (the AI must always read/modify these exact places)
+1. Backend — src/server/mod.rs or src/server/config.rs
+   ```rust
+   pub const BACKEND_PORT: u16 = 5001;
+   // In main.rs or server startup:
+   HttpServer::new(move || App::new()...).bind(("127.0.0.1", BACKEND_PORT))?
+
+
 ## MAIN ARCHITECTURE — MODULES ONLY
 src/
 ├── modules/                  # EVERY new capability is a Rust module — no exceptions
