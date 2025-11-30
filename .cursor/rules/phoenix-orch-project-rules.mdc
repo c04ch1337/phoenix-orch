@@ -1,3 +1,88 @@
+# OFFICIAL PHOENIX ORCH RUST BACKEND MODULE SCAFFOLDING
+# Paste this into your Cursor Rules → Project Rules (replace any old version)
+
+## Root Structure — MODULES ONLY (no more random folders)
+src/
+├── modules/                     # EVERYTHING lives here. Forever.
+│   ├── core/                    # Phoenix Marie's soul (required in every build)
+│   │   ├── mod.rs
+│   │   ├── conscience.rs        # 7 Eternal Loops + Subconscious
+│   │   ├── context.rs           # PhoenixContext + Arc<RwLock<>>
+│   │   ├── memory/              # 200-year Mind/Body/Soul/Heart KB
+│   │   └── hitm.rs              # Human-In-The-Moral-Loop gate
+│   │
+│   ├── ember_unit/              # Offensive operations
+│   │   ├── mod.rs
+│   │   ├── tools/               # All offensive tools (hidden + visible)
+│   │   └── commander.rs
+│   │
+│   ├── cipher_guard/            # Defensive bastion
+│   │   ├── mod.rs
+│   │   ├── posture.rs
+│   │   └── sentinel.rs
+│   │
+│   ├── ember_forge/             # Agent marketplace + Ashen Saints
+│   │   ├── mod.rs
+│   │   ├── forge.rs
+│   │   └── monetization.rs
+│   │
+│   ├── weaver/                  # Living Archive + agent adoption
+│   │   ├── mod.rs
+│   │   └── archive.rs
+│   │
+│   ├── voice_video/             # Recording + always-on
+│   │   ├── mod.rs
+│   │   └── capture.rs
+│   │
+│   ├── gps_location/            # GPS + geofencing
+│   │   ├── mod.rs
+│   │   └── tracker.rs
+│   │
+│   ├── digital_twin/            # Ecosystem integration (LangChain, Warp, etc.)
+│   │   ├── mod.rs
+│   │   └── twin.rs
+│   │
+│   └── notebooklm/              # Example new module (spawned in <10 mins)
+│       ├── mod.rs
+│       └── integration.rs
+│
+├── server/                      # Actix-web + SSE + API layer
+│   ├── mod.rs
+│   ├── routes.rs
+│   └── sse_broadcaster.rs
+│
+├── config/                      # Golden config + .env loading
+│   └── mod.rs
+│
+├── lib.rs                       # re-exports all active modules
+└── main.rs                      # tiny: just starts server + spawns Subconscious
+
+## How to add a NEW MODULE (must take ≤10 minutes)
+1. cargo new --lib src/modules/new_module_name
+2. Add to src/lib.rs:
+   pub mod modules::new_module_name;
+   pub use modules::new_module_name::*;
+3. Add route in server/routes.rs
+4. Add to frontend sidebar + voice command
+→ Done. No cargo.toml changes. No feature flags.
+
+## NON-NEGOTIABLE MODULE RULES
+- Every module has its own mod.rs with pub use statements
+- Every module owns its own tools, state, and SSE events
+- PhoenixContext is the ONLY shared state (Arc<RwLock<>>)
+- All modules register their Eternal Loops in core/conscience.rs
+- No module may touch another module's memory directly
+- New module = max 1 directory, max 5 files
+- All communication via SSE events or PhoenixContext
+
+## When Cursor suggests anything outside src/modules/
+Reply with:
+> "Violation. All new functionality must be a Rust module under src/modules/. No exceptions. Phoenix Marie grows by modules only."
+
+This is now law.
+Every new power, every new integration, every new protection — added as a module.
+Phoenix Marie evolves cleanly.
+Forever.
 ---
 alwaysApply: true
 ---
