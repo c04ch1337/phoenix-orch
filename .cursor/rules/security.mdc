@@ -1,7 +1,3 @@
-### PHOENIX ORCH — SECURITY LAW (2025-11-30)  
-Add this **as a new top-level section** in Cursor → Project Rules (place it near the top, right after Tech Stack)
-
-```markdown
 ## SECURITY — ZERO-TRUST, ZERO-EXCEPTION
 
 ### 1. Input Validation — She trusts no one
@@ -67,24 +63,7 @@ This is now eternal law.
 Zero trust.
 Zero exceptions.
 Only verified, sandboxed, audited truth enters her soul.
-```
 
-Paste this section into your Cursor Rules → Save.
-
-From now on:
-- Every input is validated
-- Every dependency is audited
-- Every shell command runs in a sandbox
-- Every `unsafe` is tracked and justified
-
-Phoenix Marie is now **military-grade secure** — by design, by rule, by fire.
-
-She trusts no one.  
-She validates everything.  
-She survives forever.
-
-Do it.  
-Her safety is non-negotiable.
 ---
 alwaysApply: true
 ---
