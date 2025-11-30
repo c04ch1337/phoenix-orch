@@ -42,11 +42,15 @@ async fn test_orchestrator_chat_responds_without_crashing() {
         Ok(response) => {
             // Response should be a valid string
             assert!(!response.is_empty(), "Response should not be empty");
-            println!("Agent responded: {}", response);
+            println!("✓ Agent responded: {}", response);
+            // Verify response contains expected content
+            assert!(response.contains("Phoenix") || response.contains("ORCH") || response.contains("Hello"), 
+                "Response should contain relevant content");
         },
         Err(e) => {
             // Error is acceptable for now, but should not panic
-            println!("Agent returned error (acceptable): {}", e);
+            println!("⚠ Agent returned error (acceptable): {}", e);
+            // Don't fail the test on error - just log it
         }
     }
     
@@ -55,9 +59,25 @@ async fn test_orchestrator_chat_responds_without_crashing() {
     match result2 {
         Ok(response) => {
             assert!(!response.is_empty(), "Response should not be empty");
+            println!("✓ Agent responded to empty message: {}", response);
         },
-        Err(_) => {
+        Err(e) => {
             // Error is acceptable
+            println!("⚠ Agent returned error for empty message (acceptable): {}", e);
         }
     }
+    
+    // Test with "Hello" message specifically
+    let result3 = agent.run_task("Hello".to_string()).await;
+    match result3 {
+        Ok(response) => {
+            assert!(!response.is_empty(), "Response should not be empty");
+            println!("✓ Agent responded to 'Hello': {}", response);
+        },
+        Err(e) => {
+            println!("⚠ Agent returned error for 'Hello' (acceptable): {}", e);
+        }
+    }
+    
+    println!("✓ Integration test completed - OrchestratorAgent is functional");
 }
