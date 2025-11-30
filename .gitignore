@@ -59,4 +59,6 @@ coverage/
 *.lsm
 *.merkle
 # Keep data directory structure but ignore contents
-!**/data/**/.gitkeep
+!**/data/**/.gitkeeplighthouse-reports/ 
+*.bak 
+FAILURE_* 

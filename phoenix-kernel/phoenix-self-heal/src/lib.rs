@@ -254,7 +254,8 @@ impl SelfHeal {
         let history = self.history.clone();
         let actions = self.actions.clone();
 
-        tokio::spawn(async move {
+        // Use phoenix_common's panic-safe task spawning
+        phoenix_common::task::spawn_monitored("self_heal_monitoring", async move {
             loop {
                 let now = SystemTime::now();
 

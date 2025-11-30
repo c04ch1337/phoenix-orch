@@ -3,6 +3,10 @@ name = "phoenix-core"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "api-server"
+path = "src/bin/api-server.rs"
+
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
@@ -15,13 +19,30 @@ warp = "0.3"
 thiserror = "1.0"
 toml = "0.8"
 prometheus = "0.13"
+actix-web = "4.4"
+actix-cors = "0.6"
+actix-rt = "2.9"
+actix-web-actors = "4.2"
+actix = "0.13"
+futures = "0.3"
+reqwest = { version = "0.11", features = ["json"] }
+hex = "0.4"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde", "std"] }
+tokio-process = "0.2"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
+async-trait = "0.1"
+pistol = "4.0"
+libpnet = "0.35"
+etherparse = "0.15"
+msfrpc = "0.1"
+docker-api = "0.14"
+clap = { version = "4.0", features = ["derive"] }
 
 # Internal dependencies
 phoenix-common = { path = "../phoenix-common" }
-warp = "0.3"
-thiserror = "1.0"
-toml = "0.8"
-prometheus = "0.13"
+triune-conscience = { path = "../triune-conscience" }
+plastic-ltm = { path = "../plastic-ltm" }
 
 # Optional Linux-specific dependencies
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -39,3 +60,5 @@ sysinfo = "0.29"
 
 [dev-dependencies]
 tokio-test = "0.4"
+actix-web = { version = "4.4", features = ["test"] }
+serde_json = "1.0"

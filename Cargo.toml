@@ -2,7 +2,14 @@
 members = [
     "phoenix-kernel",
     "crates/tch",
-    "crates/lora-rs"
+    "crates/lora-rs",
+    "crates/ember-unit",
+    "crates/cipher-guard"
 ]
 
 resolver = "2"
+
+[workspace.dependencies]
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "migrate", "json", "time", "uuid", "chrono"] }
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"

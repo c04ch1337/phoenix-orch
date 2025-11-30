@@ -252,7 +252,8 @@ impl PlasticLtm {
         let merkle_db = self.merkle_db.clone();
         let verifier = self.verifier.clone();
 
-        tokio::spawn(async move {
+        // Use phoenix_common's panic-safe task spawning
+        phoenix_common::task::spawn_monitored("ltm_reconsolidation", async move {
             loop {
                 // Wait for quiet period
                 tokio::time::sleep(Duration::from_secs(3_600)).await;

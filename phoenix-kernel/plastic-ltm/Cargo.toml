@@ -27,7 +27,7 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 
 # Internal dependencies
-phoenix-common = { path = "../phoenix-common" }
+phoenix-common = { path = "../phoenix-common", features = ["monitoring"] }
 
 [dev-dependencies]
 tokio-test = "0.4"

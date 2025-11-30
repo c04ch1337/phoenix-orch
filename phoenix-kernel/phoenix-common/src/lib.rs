@@ -11,8 +11,10 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::SystemTime};
 
 pub mod error;
+pub mod logging;
 pub mod metrics;
 pub mod safety;
+pub mod task;
 pub mod types;
 
 /// Core types for Phoenix's memory system

@@ -11,7 +11,7 @@ tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 
 # Internal dependencies
-phoenix-common = { path = "../phoenix-common" }
+phoenix-common = { path = "../phoenix-common", features = ["monitoring"] }
 
 # System monitoring
 [target.'cfg(target_os = "linux")'.dependencies]

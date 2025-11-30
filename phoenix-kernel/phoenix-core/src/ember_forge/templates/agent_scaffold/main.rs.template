@@ -1,0 +1,48 @@
+//! {{AGENT_NAME}} — Auto-forged by Phoenix ORCH
+//!
+//! {{AGENT_DESCRIPTION}}
+
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use anyhow::Result;
+
+pub struct {{AGENT_STRUCT}}Agent {
+    // Agent state
+    state: Arc<RwLock<AgentState>>,
+}
+
+struct AgentState {
+    // Add agent-specific state here
+}
+
+impl {{AGENT_STRUCT}}Agent {
+    pub fn new() -> Self {
+        Self {
+            state: Arc::new(RwLock::new(AgentState {
+                // Initialize state
+            })),
+        }
+    }
+
+    pub async fn execute(&self, task: &str) -> Result<String> {
+        // Agent logic here
+        Ok(format!("Executed: {}", task))
+    }
+
+    pub async fn get_status(&self) -> Result<String> {
+        Ok("Active".to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_agent_execution() {
+        let agent = {{AGENT_STRUCT}}Agent::new();
+        let result = agent.execute("test task").await.unwrap();
+        assert!(result.contains("Executed"));
+    }
+}
+

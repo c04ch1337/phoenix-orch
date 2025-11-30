@@ -61,30 +61,54 @@ impl SystemMetrics {
                 return Err(anyhow::anyhow!("Failed to open PDH query: {:?}", status));
             }
 
-            // Define counter paths and their corresponding values
-            let counter_paths = [
-                (r"\Process(*)\IO Read Operations/sec", &mut counters.io_read_operations_sec),
-                (r"\Process(*)\IO Write Operations/sec", &mut counters.io_write_operations_sec),
-                (r"\Memory\Page Faults/sec", &mut counters.memory_page_faults_sec),
-            ];
+            let mut counter_handles: Vec<(*mut std::ffi::c_void, *mut f64)> = Vec::new();
 
-            let mut counter_handles = Vec::with_capacity(counter_paths.len());
-
-            // Add all counters
-            for (path, value) in counter_paths.iter() {
+            // Add IO Read counter
+            {
                 let mut counter_handle = null_mut();
                 let status = Performance::PdhAddCounterW(
                     query_handle,
-                    PCWSTR::from_raw(windows::core::w!(path).as_ptr()),
+                    windows::core::w!(r"\Process(*)\IO Read Operations/sec"),
                     0,
                     &mut counter_handle
                 );
-
-                if status.is_err() {
-                    warn!("Failed to add counter {}: {:?}", path, status);
-                    continue;
+                if status.is_ok() {
+                    counter_handles.push((counter_handle, &mut counters.io_read_operations_sec as *mut f64));
+                } else {
+                    warn!("Failed to add IO Read counter: {:?}", status);
                 }
-                counter_handles.push((counter_handle, *value));
+            }
+
+            // Add IO Write counter
+            {
+                let mut counter_handle = null_mut();
+                let status = Performance::PdhAddCounterW(
+                    query_handle,
+                    windows::core::w!(r"\Process(*)\IO Write Operations/sec"),
+                    0,
+                    &mut counter_handle
+                );
+                if status.is_ok() {
+                    counter_handles.push((counter_handle, &mut counters.io_write_operations_sec as *mut f64));
+                } else {
+                    warn!("Failed to add IO Write counter: {:?}", status);
+                }
+            }
+
+            // Add Memory Page Faults counter
+            {
+                let mut counter_handle = null_mut();
+                let status = Performance::PdhAddCounterW(
+                    query_handle,
+                    windows::core::w!(r"\Memory\Page Faults/sec"),
+                    0,
+                    &mut counter_handle
+                );
+                if status.is_ok() {
+                    counter_handles.push((counter_handle, &mut counters.memory_page_faults_sec as *mut f64));
+                } else {
+                    warn!("Failed to add Memory Page Faults counter: {:?}", status);
+                }
             }
 
             if counter_handles.is_empty() {
@@ -110,7 +134,7 @@ impl SystemMetrics {
             }
 
             // Get formatted counter values
-            for (handle, value) in counter_handles {
+            for (handle, value_ptr) in counter_handles {
                 let mut counter_value = Performance::PDH_FMT_COUNTERVALUE::default();
                 let status = Performance::PdhGetFormattedCounterValue(
                     handle,
@@ -124,7 +148,7 @@ impl SystemMetrics {
                     continue;
                 }
 
-                *value = counter_value.Anonymous.doubleValue;
+                *value_ptr = counter_value.Anonymous.doubleValue;
             }
 
             // Clean up

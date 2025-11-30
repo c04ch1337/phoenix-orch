@@ -182,7 +182,7 @@ impl IncrementalLearner {
         let world_model = self.world_model.clone();
         let conscience = self.conscience.clone();
 
-        tokio::spawn(async move {
+        phoenix_common::task::spawn_monitored("learning_task_processor", async move {
             while let Some(task) = task_rx.recv().await {
                 let timer = metrics::start_perception_timer("learning_task");
 
@@ -246,7 +246,7 @@ impl IncrementalLearner {
 
         // Start periodic tasks
         let task_tx_clone = task_tx.clone();
-        tokio::spawn(async move {
+        phoenix_common::task::spawn_monitored("learning_periodic_tasks", async move {
             loop {
                 // Schedule memory replay
                 task_tx_clone

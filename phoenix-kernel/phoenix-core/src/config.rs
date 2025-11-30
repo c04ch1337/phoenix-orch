@@ -30,6 +30,12 @@ pub struct Config {
     pub resources: ResourceConfig,
     /// Component-specific settings
     pub components: HashMap<String, toml::Value>,
+    /// API keys for external services (optional, prefer environment variables)
+    #[serde(default)]
+    pub api_keys: HashMap<String, String>,
+    /// AI model configuration
+    #[serde(default)]
+    pub ai_models: HashMap<String, String>,
 }
 
 /// System-wide configuration
@@ -215,12 +221,43 @@ impl Config {
             CoreError::config_error(format!("Failed to read config file: {}", e), None)
         })?;
 
-        let config: Self = toml::from_str(&content)
+        let mut config: Self = toml::from_str(&content)
             .map_err(|e| CoreError::config_error(format!("Failed to parse config: {}", e), None))?;
+
+        // Override API keys from environment variables if present (more secure)
+        if let Ok(openrouter_key) = std::env::var("OPENROUTER_API_KEY") {
+            config.api_keys.insert("openrouter".to_string(), openrouter_key);
+        }
 
         config.validate()?;
 
         Ok(config)
+    }
+
+    /// Get OpenRouter API key (from env var or config)
+    pub fn get_openrouter_key(&self) -> Option<String> {
+        std::env::var("OPENROUTER_API_KEY")
+            .ok()
+            .or_else(|| self.api_keys.get("openrouter").cloned())
+    }
+
+    /// Get default AI model (from env var or config)
+    pub fn get_default_model(&self) -> String {
+        std::env::var("DEFAULT_AI_MODEL")
+            .unwrap_or_else(|_| {
+                self.ai_models
+                    .get("default_model")
+                    .cloned()
+                    .unwrap_or_else(|| "anthropic/claude-3.5-sonnet".to_string())
+            })
+    }
+
+    /// Get OpenRouter API endpoint
+    pub fn get_openrouter_endpoint(&self) -> String {
+        self.ai_models
+            .get("openrouter_endpoint")
+            .cloned()
+            .unwrap_or_else(|| "https://openrouter.ai/api/v1/chat/completions".to_string())
     }
 
     /// Validate configuration
@@ -336,6 +373,8 @@ mod tests {
                 network_limit: 1024 * 1024 * 10,
             },
             components: HashMap::new(),
+            api_keys: HashMap::new(),
+            ai_models: HashMap::new(),
         };
 
         assert!(config.validate().is_ok());

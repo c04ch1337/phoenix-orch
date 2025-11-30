@@ -35,9 +35,31 @@ impl SystemComponents {
         }
     }
 
-    /// Get current health status
+    /// Get current health status with detailed component checks
     pub async fn get_health_status(&self) -> Result<SystemHealth> {
+        info!("Performing system health check");
         let states = self.states.read().await;
+
+        // Check core subsystems
+        let memory_health = if let Some(mem) = &self.memory {
+            match mem.verify_integrity().await {
+                Ok(score) if score > 0.9 => true,
+                Ok(score) => {
+                    info!("Memory integrity below threshold: {}", score);
+                    false
+                },
+                Err(e) => {
+                    info!("Memory check failed: {}", e);
+                    false
+                }
+            }
+        } else {
+            info!("Memory subsystem not initialized");
+            false
+        };
+
+        let conscience_health = self.conscience.is_some();
+        let world_model_health = self.world_model.is_some();
         let failed: Vec<_> = states
             .iter()
             .filter_map(|s| match &s.status {
@@ -46,10 +68,19 @@ impl SystemComponents {
             })
             .collect();
 
-        Ok(SystemHealth {
-            healthy: failed.is_empty(),
+        let healthy = failed.is_empty() && memory_health && conscience_health && world_model_health;
+        
+        let status = SystemHealth {
+            healthy,
             failed_components: failed,
-        })
+        };
+
+        info!("Health check complete - System healthy: {}", healthy);
+        if !healthy {
+            info!("Failed components: {:?}", failed);
+        }
+
+        Ok(status)
     }
 
     /// Get system metrics
@@ -107,17 +138,23 @@ pub struct SystemState {
 impl SystemState {
     /// Create new system state
     pub fn new(config: crate::config::SystemConfig, debug: Arc<crate::debug::DebugTrace>) -> Self {
+        info!("Initializing system state with config: {:?}", config);
+        
+        let components = SystemComponents::new();
+        info!("Core components initialized");
+
         Self {
             shutdown_requested: false,
-            components: Some(SystemComponents::new()),
+            components: Some(components),
             start_time: std::time::SystemTime::now(),
         }
-        /// Get system uptime
-        pub fn uptime(&self) -> Duration {
-            self.start_time
-                .elapsed()
-                .unwrap_or(Duration::from_secs(0))
-        }
+    }
+
+    /// Get system uptime
+    pub fn uptime(&self) -> Duration {
+        self.start_time
+            .elapsed()
+            .unwrap_or(Duration::from_secs(0))
     }
 }
 

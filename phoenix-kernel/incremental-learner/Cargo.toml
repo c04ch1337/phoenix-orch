@@ -8,7 +8,7 @@ license = "MIT"
 
 [dependencies]
 # Phoenix dependencies
-phoenix-common = { path = "../phoenix-common" }
+phoenix-common = { path = "../phoenix-common", features = ["monitoring"] }
 world-self-model = { path = "../world-self-model" }
 plastic-ltm = { path = "../plastic-ltm" }
 triune-conscience = { path = "../triune-conscience" }

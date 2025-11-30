@@ -12,6 +12,8 @@ pub mod api;
 pub mod config;
 pub mod core;
 pub mod error;
+pub mod tools;
+pub mod ember_forge;
 
 #[cfg(target_os = "windows")]
 pub mod metrics_windows;
@@ -44,7 +46,16 @@ pub use config::SystemConfig;
 pub use error::Error;
 pub use system::{SystemComponents, SystemHealth, SystemState};
 
+/// Phoenix Core API state (simplified for API server)
+#[derive(Debug, Clone)]
+pub struct PhoenixCore {
+    pub components: Arc<tokio::sync::RwLock<std::collections::HashMap<String, String>>>,
+    pub config: Arc<tokio::sync::RwLock<config::Config>>,
+    pub health: Arc<tokio::sync::RwLock<system::SystemHealth>>,
+}
+
 use anyhow::Result;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{error, info};
