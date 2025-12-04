@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhoenixPrompt Test</title>
+  <!-- Use React 18 instead of 19 for better CDN compatibility -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0a0a0a;
+      color: #fff;
+    }
+    .test-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-info {
+      background-color: rgba(0, 0, 0, 0.7);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-component {
+      flex: 1;
+      border: 1px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 500px;
+    }
+    /* Chat component styles */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+    }
+    .messages-container {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .user-message {
+      align-self: flex-end;
+      background-color: #27272a;
+      border: 1px solid #3f3f46;
+    }
+    .phoenix-message {
+      align-self: flex-start;
+      background-color: rgba(127, 29, 29, 0.3);
+      border: 1px solid #b91c1c;
+      color: #fee2e2;
+    }
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .message-sender {
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .phoenix-sender {
+      color: #ef4444;
+    }
+    .user-sender {
+      color: #a1a1aa;
+    }
+    .message-time {
+      font-size: 0.75rem;
+      color: #71717a;
+    }
+    .message-content {
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+    }
+    .input-container {
+      padding: 16px;
+      border-top: 1px solid #b91c1c;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+    .input-form {
+      display: flex;
+      gap: 16px;
+    }
+    .text-input {
+      flex: 1;
+      background-color: transparent;
+      border: 1px solid #b91c1c;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    .text-input:focus {
+      outline: none;
+      border-color: #ef4444;
+    }
+    .text-input:disabled {
+      opacity: 0.5;
+    }
+    .send-button {
+      background-color: #b91c1c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .send-button:hover {
+      background-color: #dc2626;
+    }
+    .send-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .thinking-indicator {
+      align-self: flex-start;
+      background-color: rgba(127, 29, 29, 0.3);
+      border: 1px solid #b91c1c;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .thinking-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      animation: bounce 1s infinite;
+    }
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    .error-message {
+      align-self: flex-start;
+      background-color: rgba(127, 29, 29, 0.3);
+      border: 1px solid #b91c1c;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .error-header {
+      color: #ef4444;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .error-content {
+      font-size: 0.875rem;
+      color: #fee2e2;
+    }
+    .log-area {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-line {
+      margin: 0;
+      padding: 2px 0;
+    }
+    .latency {
+      color: #10b981;
+      font-weight: bold;
+    }
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-info">
+      <h1>PhoenixPrompt Component Test</h1>
+      <p>Testing the PhoenixPrompt component with "Who are you?" message</p>
+      <div id="log-container" class="log-area">
+        <h3>Test Logs:</h3>
+      </div>
+    </div>
+    <div class="test-component">
+      <div id="root"></div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // Mock Tauri's invoke function
+    window.invoke = async (command, args) => {
+      logMessage(`Invoke called with: ${command}, message: "${args.goal}"`);
+      
+      // Simulate a delay to mimic API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Record response time
+      const responseTime = 1500;
+      logMessage(`Response received in <span class="latency">${responseTime}ms</span>`);
+      
+      // Mock response based on the user's message
+      if (args.goal.toLowerCase().includes("who are you")) {
+        return {
+          success: true,
+          response: "I am Phoenix, your orchestrator assistant. I help coordinate tasks and provide information across various systems. I'm designed to be helpful, informative, and responsive to your needs."
+        };
+      }
+      
+      return {
+        success: true,
+        response: `You asked: "${args.goal}". I'm the Phoenix Orchestrator, ready to assist with your tasks.`
+      };
+    };
+
+    function logMessage(message) {
+      const logContainer = document.getElementById('log-container');
+      const logLine = document.createElement('p');
+      logLine.className = 'log-line';
+      logLine.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(logLine);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // PhoenixPrompt Component
+    function PhoenixPrompt() {
+      const [messages, setMessages] = useState([]);
+      const [inputValue, setInputValue] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const messagesEndRef = useRef(null);
+      
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, isLoading]);
+      
+      const formatTime = (timestamp) => {
+        return new Date(timestamp).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      };
+      
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!inputValue.trim() || isLoading) return;
+        
+        const userMessage = {
+          id: Date.now().toString(),
+          type: 'user',
+          content: inputValue.trim(),
+          timestamp: Date.now()
+        };
+        
+        // Get current input value before clearing
+        const messageContent = inputValue.trim();
+        
+        // Clear input immediately and force update
+        setInputValue('');
+        
+        // Update DOM directly to ensure clearing
+        const inputElement = document.querySelector('.text-input');
+        if (inputElement) {
+          inputElement.value = '';
+        }
+        
+        setMessages(prev => [...prev, userMessage]);
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+          logMessage(`Sending message to OrchestratorAgent: "${userMessage.content}"`);
+          const startTime = performance.now();
+          
+          // Create a placeholder message
+          const phoenixMessageId = (Date.now() + 1).toString();
+          const phoenixMessage = {
+            id: phoenixMessageId,
+            type: 'phoenix',
+            content: '',
+            timestamp: Date.now() + 1
+          };
+          
+          setMessages(prev => [...prev, phoenixMessage]);
+          
+          // Send message to OrchestratorAgent
+          const response = await invoke('invoke_orchestrator_task', { 
+            goal: userMessage.content 
+          });
+          
+          const endTime = performance.now();
+          const latency = endTime - startTime;
+          logMessage(`Message processing complete. Total latency: <span class="latency">${latency.toFixed(2)}ms</span>`);
+          
+          if (response && response.success) {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === phoenixMessageId 
+                  ? { ...msg, content: response.response } 
+                  : msg
+              )
+            );
+            logMessage(`Response received: "${response.response.substring(0, 50)}${response.response.length > 50 ? '...' : ''}"`);
+          } else {
+            setError('Failed to get a response from Phoenix.');
+            setMessages(prev => prev.filter(msg => msg.id !== phoenixMessageId));
+            logMessage('Error: Failed to get a response from Phoenix.');
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          setError(`An error occurred: ${errorMessage}`);
+          logMessage(`Error: ${errorMessage}`);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      return (
+        <div className="chat-container">
+          <div className="messages-container">
+            {messages.map(message => (
+              <div 
+                key={message.id} 
+                className={`message ${message.type === 'user' ? 'user-message' : 'phoenix-message'}`}
+              >
+                <div className="message-header">
+                  <span className={`message-sender ${message.type === 'user' ? 'user-sender' : 'phoenix-sender'}`}>
+                    {message.type === 'user' ? 'USER' : '🔥 PHOENIX'}
+                  </span>
+                  <span className="message-time">{formatTime(message.timestamp)}</span>
+                </div>
+                <div className="message-content">{message.content || '...'}</div>
+              </div>
+            ))}
+            
+            {isLoading && (
+              <div className="thinking-indicator">
+                <span className="message-sender phoenix-sender">🔥 PHOENIX</span>
+                <span>is thinking...</span>
+                <div className="thinking-dots">
+                  <div className="thinking-dot"></div>
+                  <div className="thinking-dot"></div>
+                  <div className="thinking-dot"></div>
+                </div>
+              </div>
+            )}
+            
+            {error && (
+              <div className="error-message">
+                <div className="error-header">ERROR</div>
+                <div className="error-content">{error}</div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef}></div>
+          </div>
+          
+          <div className="input-container">
+            <form className="input-form" onSubmit={handleSubmit}>
+              <input
+                type="text"
+                className="text-input"
+                value={inputValue}
+                onChange={(e) => {
+                  // Set the input value and ensure it's reflected in the DOM
+                  setInputValue(e.target.value);
+                  e.target.value = e.target.value; // Ensure value is set on the DOM element
+                }}
+                disabled={isLoading}
+                placeholder="Type your message..."
+                ref={(el) => {
+                  if (el) el.value = inputValue; // Ensure React state and DOM are in sync
+                }}
+              />
+              <button
+                type="submit"
+                className="send-button"
+                disabled={!inputValue.trim() || isLoading}
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // Render the component using the old ReactDOM.render API for better compatibility
+    ReactDOM.render(<PhoenixPrompt />, document.getElementById('root'));
+
+    // Auto-run specific tests after the component is mounted
+    setTimeout(() => {
+      logMessage("Running automated test: 'Who are you?' message");
+      const input = document.querySelector('.text-input');
+      const sendButton = document.querySelector('.send-button');
+      
+      if (input && sendButton) {
+        // Focus the input
+        input.focus();
+        
+        // Set input value to "Who are you?"
+        input.value = "Who are you?";
+        
+        // Trigger the onChange event
+        const event = new Event('input', { bubbles: true });
+        input.dispatchEvent(event);
+        
+        // Trigger React's onChange handler
+        const changeHandler = Object.keys(input).find(key => key.startsWith('__reactEventHandlers'));
+        if (changeHandler && input[changeHandler] && input[changeHandler].onChange) {
+          input[changeHandler].onChange({ target: input });
+        }
+        
+        // Wait a bit and then click the send button
+        setTimeout(() => {
+          sendButton.click();
+          logMessage("Message sent: 'Who are you?'");
+        }, 500);
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

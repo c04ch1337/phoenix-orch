@@ -9,7 +9,8 @@
 
 @layer base {
   html, body {
-    @apply antialiased bg-phoenix-void text-white h-screen w-screen overflow-hidden;
+    @apply antialiased text-white h-screen w-screen overflow-hidden;
+    background-color: #0A0A0A; /* phoenix-void */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

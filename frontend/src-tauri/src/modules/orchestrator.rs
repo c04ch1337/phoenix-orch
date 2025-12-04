@@ -1,10 +1,37 @@
-use std::sync::{Arc, RwLock};
-use crate::modules::orchestrator::{
+use std::sync::Arc;
+
+// Import from the phoenix-orch-modules crate
+use phoenix_orch_modules::modules::orchestrator::{
     OrchestratorAgent,
     OrchestratorConfig,
     SystemConfig,
     VectorSearchConfig,
     ConscienceConfig,
+    filesystem_list_drives,
+    filesystem_read_file,
+    filesystem_write_file,
+    filesystem_list_directory,
+    filesystem_search_files,
+    filesystem_create_directory,
+    filesystem_create_file,
+    filesystem_delete_item,
+};
+
+// Re-export for use in this module
+pub use phoenix_orch_modules::modules::orchestrator::{
+    OrchestratorAgent,
+    OrchestratorConfig,
+    SystemConfig,
+    VectorSearchConfig,
+    ConscienceConfig,
+    filesystem_list_drives,
+    filesystem_read_file,
+    filesystem_write_file,
+    filesystem_list_directory,
+    filesystem_search_files,
+    filesystem_create_directory,
+    filesystem_create_file,
+    filesystem_delete_item,
 };
 
 /// OrchestratorModule provides a wrapper for the OrchestratorAgent

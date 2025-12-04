@@ -17,7 +17,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const URL = 'http://localhost:3000'; // Change if your dev server runs on a different port
+const URL = 'http://localhost:5000'; // Phoenix ORCH frontend runs on port 5000
 
 async function runLighthouse() {
   console.log('🔥 Phoenix ORCH - PWA Score Checker 🔥');

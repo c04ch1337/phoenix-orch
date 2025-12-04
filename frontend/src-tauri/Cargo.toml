@@ -18,6 +18,7 @@ tauri = { version = "1.4.0", features = [] }
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
 chrono = { version = "0.4", features = ["serde"] }
+phoenix-orch-modules = { path = "../../../src" }
 
 [features]
 # This feature is used for production builds where `devPath` points to the filesystem

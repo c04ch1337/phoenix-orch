@@ -5,3 +5,4 @@
 pub mod report_squad;
 pub mod weaver;
 pub mod orchestrator;
+pub mod notifications;

@@ -1,4 +1,14 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
+use thiserror::Error;
+use aes_gcm::{Aes256Gcm, Key, Nonce};
+use aes_gcm::aead::{Aead, NewAead};
+use rand::{thread_rng, Rng};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 
 /// Report Generator for professional security reports
 #[derive(Debug, Clone, Serialize, Deserialize)]

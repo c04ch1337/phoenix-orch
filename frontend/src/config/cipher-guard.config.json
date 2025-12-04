@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "api": {
+    "baseUrl": "/api/v1",
+    "endpoints": {
+      "assets": "/api/v1/assets",
+      "assetDetails": "/api/v1/assets/{id}",
+      "alerts": "/api/v1/alerts",
+      "alertDetails": "/api/v1/alerts/{id}",
+      "actions": "/api/v1/actions",
+      "mitreTechniques": "/api/v1/mitre/techniques",
+      "forensicsTimeline": "/api/v1/forensics/timeline",
+      "defenseEngagement": "/api/v1/defense/{id}"
+    }
+  },
+  "websocket": {
+    "url": "ws://localhost:8080/cipher-guard/ws",
+    "reconnectInterval": 5000,
+    "maxReconnectAttempts": 10,
+    "connectionTimeout": 30000
+  },
+  "edr": {
+    "integrations": {
+      "velociraptor": {
+        "enabled": true,
+        "apiUrl": "http://localhost:8889",
+        "pollingInterval": 10000
+      },
+      "osquery": {
+        "enabled": true,
+        "apiUrl": "http://localhost:8000",
+        "pollingInterval": 15000
+      },
+      "wazuh": {
+        "enabled": true,
+        "apiUrl": "http://localhost:55000",
+        "pollingInterval": 12000
+      }
+    }
+  },
+  "ruleEngine": {
+    "sigma": {
+      "rulesetPath": "/rules/sigma",
+      "updateInterval": 86400000,
+      "emergencyUpdateInterval": 3600000
+    },
+    "yara": {
+      "rulesetPath": "/rules/yara",
+      "updateInterval": 86400000,
+      "emergencyUpdateInterval": 3600000
+    },
+    "ruleCount": 100000
+  },
+  "forensics": {
+    "retentionPeriodDays": 365,
+    "storagePath": "/evidence",
+    "compressionEnabled": true,
+    "encryptionEnabled": true,
+    "storageQuotaGB": 1024,
+    "warningThresholdPercent": 80
+  },
+  "autoDefense": {
+    "enableAutoContainment": true,
+    "containmentThreshold": "high",
+    "autoRemediationEnabled": false,
+    "remediationThreshold": "critical",
+    "notifyOnDefensiveAction": true,
+    "waitForApprovalThreshold": "medium"
+  },
+  "ui": {
+    "refreshInterval": 5000,
+    "timeFormat": "yyyy-MM-dd HH:mm:ss",
+    "defaultView": "galaxy",
+    "alertSoundEnabled": true,
+    "maxDisplayedAlerts": 50,
+    "flameColors": {
+      "calm": "#ffffff",
+      "alert": "#00ddff",
+      "defense": "#00ffaa"
+    }
+  },
+  "conscience": {
+    "protectionPoliciesEnabled": true,
+    "overrideRequiresApproval": true,
+    "protectedCategories": [
+      "family",
+      "children",
+      "innocent",
+      "personal",
+      "sensitive"
+    ],
+    "ethicalGuardEnabled": true
+  }
+}

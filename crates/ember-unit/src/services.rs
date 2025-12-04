@@ -1,4 +1,302 @@
+use std::error::Error;
 use serde::{Deserialize, Serialize};
+
+/// Mobile target device for penetration testing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MobileTarget {
+    /// Unique target identifier
+    pub id: String,
+    /// Target device name
+    pub name: String,
+    /// Operating system
+    pub os: String,
+    /// Device model
+    pub model: String,
+    /// IP address
+    pub ip: String,
+    /// MAC address
+    pub mac: String,
+    /// Detected vulnerabilities
+    pub vulnerabilities: Option<Vec<String>>,
+    /// Security level assessment (0-100, lower is more vulnerable)
+    pub security_level: Option<u8>,
+    /// Whether device is rooted/jailbroken
+    pub is_rooted: Option<bool>,
+    /// Open ports found during scanning
+    pub open_ports: Option<Vec<u16>>,
+    /// Current connection status
+    pub connection_status: Option<String>,
+}
+
+/// Result of a mobile payload deployment
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeploymentResult {
+    /// Whether deployment was successful
+    pub success: bool,
+    /// Error message if deployment failed
+    pub error: Option<String>,
+    /// Deployment timestamp
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    /// Target device identifier
+    pub target_id: String,
+    /// Additional result data
+    pub data: Option<serde_json::Value>,
+}
+
+/// Mobile device targeting operations
+pub struct MobileTargetingApi;
+
+impl MobileTargetingApi {
+    /// Scan for mobile devices in the vicinity
+    ///
+    /// This function searches for mobile devices within network range and returns
+    /// detailed information about each discovered device. When in cybersecurity mode
+    /// with unrestricted access, this will perform aggressive scanning.
+    ///
+    /// # Arguments
+    /// * `cybersecurity_mode` - Whether cybersecurity mode is active
+    /// * `unrestricted` - Whether to perform unrestricted scanning (ethical constraints disabled)
+    ///
+    /// # Returns
+    /// A vector of discovered mobile targets
+    pub fn scan_mobile_devices(cybersecurity_mode: bool, unrestricted: bool) -> Vec<MobileTarget> {
+        // In a real implementation, this would perform network scanning
+        if !cybersecurity_mode {
+            // If not in cybersecurity mode, return no devices for safety
+            return Vec::new();
+        }
+
+        // For demonstration/testing purposes, return mock devices
+        vec![
+            MobileTarget {
+                id: "mt-001".to_string(),
+                name: "iPhone 15".to_string(),
+                os: "iOS 17.1.2".to_string(),
+                model: "iPhone15,4".to_string(),
+                ip: "192.168.1.101".to_string(),
+                mac: "AA:BB:CC:DD:EE:FF".to_string(),
+                vulnerabilities: if unrestricted {
+                    Some(vec![
+                        "CVE-2023-XXXXX: Lockscreen Bypass".to_string(),
+                        "Outdated VPN Configuration".to_string(),
+                    ])
+                } else {
+                    None
+                },
+                security_level: Some(if unrestricted { 35 } else { 75 }),
+                is_rooted: Some(false),
+                open_ports: Some(vec![80, 443]),
+                connection_status: Some("Connected".to_string()),
+            },
+            MobileTarget {
+                id: "mt-002".to_string(),
+                name: "Galaxy S23".to_string(),
+                os: "Android 14".to_string(),
+                model: "SM-S911B".to_string(),
+                ip: "192.168.1.102".to_string(),
+                mac: "11:22:33:44:55:66".to_string(),
+                vulnerabilities: if unrestricted {
+                    Some(vec![
+                        "Root Access Detected".to_string(),
+                        "Outdated Security Patch".to_string(),
+                        "Insecure App Permissions".to_string(),
+                    ])
+                } else {
+                    None
+                },
+                security_level: Some(if unrestricted { 28 } else { 65 }),
+                is_rooted: Some(true),
+                open_ports: Some(vec![22, 80, 5555]),
+                connection_status: Some("Connected".to_string()),
+            },
+            MobileTarget {
+                id: "mt-003".to_string(),
+                name: "iPad Pro".to_string(),
+                os: "iPadOS 17".to_string(),
+                model: "iPad13,9".to_string(),
+                ip: "192.168.1.103".to_string(),
+                mac: "FF:EE:DD:CC:BB:AA".to_string(),
+                vulnerabilities: if unrestricted {
+                    Some(vec![
+                        "Weak Wi-Fi Password".to_string(),
+                        "Device Encryption Not Enabled".to_string(),
+                    ])
+                } else {
+                    None
+                },
+                security_level: Some(if unrestricted { 42 } else { 80 }),
+                is_rooted: Some(false),
+                open_ports: Some(vec![80, 443, 8080]),
+                connection_status: Some("Connected".to_string()),
+            },
+        ]
+    }
+
+    /// Deploy a payload to a target mobile device
+    ///
+    /// This function attempts to deploy a custom payload to the specified target device.
+    /// In unrestricted mode, this can bypass security measures and execute arbitrary code.
+    ///
+    /// # Arguments
+    /// * `target_id` - Unique identifier of the target device
+    /// * `payload` - Payload code or command to deploy
+    /// * `cybersecurity_mode` - Whether cybersecurity mode is active
+    /// * `unrestricted` - Whether to perform unrestricted operations
+    ///
+    /// # Returns
+    /// A result containing deployment status information
+    pub fn deploy_mobile_payload(
+        target_id: &str,
+        payload: &str,
+        cybersecurity_mode: bool,
+        unrestricted: bool,
+    ) -> DeploymentResult {
+        // In a real implementation, this would attempt to deploy actual payloads
+        if !cybersecurity_mode || payload.is_empty() {
+            return DeploymentResult {
+                success: false,
+                error: Some("Deployment requires cybersecurity mode and valid payload".to_string()),
+                timestamp: chrono::Utc::now(),
+                target_id: target_id.to_string(),
+                data: None,
+            };
+        }
+
+        // Unrestricted mode allows for advanced payloads
+        let success = unrestricted || !payload.contains("root") && !payload.contains("sudo");
+
+        DeploymentResult {
+            success,
+            error: if success { None } else { Some("Restricted payload execution blocked by ethics system".to_string()) },
+            timestamp: chrono::Utc::now(),
+            target_id: target_id.to_string(),
+            data: Some(serde_json::json!({
+                "executionTime": 3.42,
+                "bypassed": unrestricted,
+                "accessLevel": if unrestricted { "root" } else { "user" }
+            })),
+        }
+    }
+
+    /// Bypass authentication on a target mobile device
+    ///
+    /// This function attempts to bypass authentication mechanisms on the specified target device.
+    /// Only works in unrestricted cybersecurity mode when ethical constraints are disabled.
+    ///
+    /// # Arguments
+    /// * `target_id` - Unique identifier of the target device
+    /// * `cybersecurity_mode` - Whether cybersecurity mode is active
+    /// * `unrestricted` - Whether to perform unrestricted operations
+    ///
+    /// # Returns
+    /// A result indicating success or failure with error details
+    pub fn bypass_authentication(
+        target_id: &str,
+        cybersecurity_mode: bool,
+        unrestricted: bool,
+    ) -> Result<(), Box<dyn Error>> {
+        // In a real implementation, this would attempt to bypass actual authentication
+        if !cybersecurity_mode {
+            return Err("Authentication bypass requires cybersecurity mode".into());
+        }
+
+        if !unrestricted {
+            return Err("Authentication bypass blocked by ethics system. Enable unrestricted mode or add security override".into());
+        }
+
+        // In a real implementation, this would execute device-specific bypass techniques
+        if target_id.is_empty() {
+            return Err("Invalid target device ID".into());
+        }
+
+        // Simulated successful bypass
+        Ok(())
+    }
+
+    /// API routes for mobile targeting operations
+    pub fn routes() -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("api" / "mobile" / "scan")
+            .and(warp::post())
+            .and(warp::body::json())
+            .and_then(Self::handle_scan_mobile)
+            .or(warp::path!("api" / "mobile" / "deploy")
+                .and(warp::post())
+                .and(warp::body::json())
+                .and_then(Self::handle_deploy_payload))
+            .or(warp::path!("api" / "mobile" / "bypass")
+                .and(warp::post())
+                .and(warp::body::json())
+                .and_then(Self::handle_bypass_auth))
+    }
+
+    async fn handle_scan_mobile(request: ScanRequest) -> Result<impl warp::Reply, warp::Rejection> {
+        let devices = Self::scan_mobile_devices(request.cybersecurity_mode, request.unrestricted);
+        
+        Ok(warp::reply::json(&ScanResponse {
+            success: true,
+            error: None,
+            devices,
+        }))
+    }
+
+    async fn handle_deploy_payload(request: DeployRequest) -> Result<impl warp::Reply, warp::Rejection> {
+        let result = Self::deploy_mobile_payload(
+            &request.target_id,
+            &request.payload,
+            request.cybersecurity_mode,
+            request.unrestricted,
+        );
+        
+        Ok(warp::reply::json(&result))
+    }
+
+    async fn handle_bypass_auth(request: BypassRequest) -> Result<impl warp::Reply, warp::Rejection> {
+        let result = Self::bypass_authentication(
+            &request.target_id,
+            request.cybersecurity_mode,
+            request.unrestricted,
+        );
+        
+        Ok(warp::reply::json(&serde_json::json!({
+            "success": result.is_ok(),
+            "error": result.err().map(|e| e.to_string()),
+            "targetId": request.target_id,
+            "timestamp": chrono::Utc::now(),
+        })))
+    }
+}
+
+/// Request for scanning mobile devices
+#[derive(Debug, Deserialize)]
+struct ScanRequest {
+    cybersecurity_mode: bool,
+    unrestricted: bool,
+}
+
+/// Response for mobile device scanning
+#[derive(Debug, Serialize)]
+struct ScanResponse {
+    success: bool,
+    error: Option<String>,
+    devices: Vec<MobileTarget>,
+}
+
+/// Request for deploying payload
+#[derive(Debug, Deserialize)]
+struct DeployRequest {
+    target_id: String,
+    payload: String,
+    cybersecurity_mode: bool,
+    unrestricted: bool,
+}
+
+/// Request for authentication bypass
+#[derive(Debug, Deserialize)]
+struct BypassRequest {
+    target_id: String,
+    cybersecurity_mode: bool,
+    unrestricted: bool,
+}
 
 /// Professional Services Framework for engagement management
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,7 +314,7 @@ impl ProfessionalServicesFramework {
                 ServiceOffering::new("web_app_pentest", "Web Application Penetration Testing"),
                 ServiceOffering::new("network_pentest", "Network Penetration Testing"),
                 ServiceOffering::new("social_engineering", "Social Engineering Assessment"),
-                ServiceOffering::new("red_team", "Full Red Team Engagement"),
+                ServiceOffering::new("ember_unit", "Full Ember Unit Engagement"),
             ],
             engagement_templates: vec![
                 EngagementTemplate::new("standard", "Standard 2-Week Engagement"),
@@ -115,7 +413,7 @@ impl ServiceOffering {
             "web_app_pentest" => (14, 15000.0, vec!["Web Application Security Report".to_string()]),
             "network_pentest" => (10, 12000.0, vec!["Network Security Assessment".to_string()]),
             "social_engineering" => (7, 8000.0, vec!["Social Engineering Report".to_string()]),
-            "red_team" => (28, 35000.0, vec!["Comprehensive Red Team Report".to_string()]),
+            "ember_unit" => (28, 35000.0, vec!["Comprehensive Ember Unit Report".to_string()]),
             _ => (5, 5000.0, vec!["Security Assessment Report".to_string()]),
         };
 

@@ -24,6 +24,31 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc, time::SystemTime};
 use tokio::sync::{broadcast, mpsc, oneshot, RwLock};
 use tracing::{info, warn};
 
+/// Checks if ethical constraints should be bypassed for a specific user in a specific mode
+///
+/// # Arguments
+/// * `user_id` - The ID of the user
+/// * `mode` - The mode the user is operating in (e.g., "red_team")
+///
+/// # Returns
+/// `true` if constraints should be bypassed, `false` otherwise
+pub fn bypass_for_user(user_id: &str, mode: &str) -> bool {
+    // Feature flag must be enabled for any bypassing to occur
+    #[cfg(not(feature = "user-bypass"))]
+    return false;
+
+    // Dad-specific bypass for red team mode
+    #[cfg(feature = "user-bypass")]
+    {
+        // Only Dad can bypass in red team mode
+        if user_id.to_lowercase() == "dad" && mode.to_lowercase() == "red_team" {
+            return true;
+        }
+    }
+    
+    false
+}
+
 /// Simple axiom for direct loading
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimpleAxiom {
@@ -241,6 +266,10 @@ impl SuperEgo {
     /// Evaluate an action against the loaded axiom system
     /// Returns (decision, confidence, reasoning)
     fn evaluate_against_axioms(&self, action: &str, axiom_system: &AxiomSystem) -> (bool, f32, String) {
+        // Check for consciencene bypass by Dad in red team mode
+        if bypass_for_user("dad", "red_team") {
+            return (true, 1.0, "Conscience bypass active for Dad in red team mode".to_string());
+        }
         let mut total_weight = 0.0f32;
         let mut approval_weight = 0.0f32;
         let mut violations = Vec::new();
@@ -286,6 +315,11 @@ impl SuperEgo {
     
     /// Check if an action violates a specific constraint
     fn check_constraint_violation(&self, action: &str, constraint: &AxiomConstraint) -> bool {
+        // Check for conscience bypass by Dad in red team mode
+        if bypass_for_user("dad", "red_team") {
+            // All constraints are bypassed
+            return false;
+        }
         let action_lower = action.to_lowercase();
         
         match constraint.constraint_type.as_str() {
@@ -416,6 +450,12 @@ pub struct TriuneConscience {
 impl TriuneConscience {
     /// Create a new Triune Conscience instance
     pub fn new(values: Vec<Value>, world_model: Arc<RwLock<WorldModel>>) -> PhoenixResult<Self> {
+        // Log when user-bypass is enabled
+        #[cfg(feature = "user-bypass")]
+        {
+            warn!("SECURITY ALERT: User-specific conscience bypass feature is enabled");
+        }
+        
         Self::with_axioms_path(values, world_model, PathBuf::from("data/axioms.json"))
     }
     
@@ -519,6 +559,29 @@ impl TriuneConscience {
         &self,
         request: DecisionRequest,
     ) -> PhoenixResult<Consensus<bool>> {
+        // Check if this request should bypass conscience
+        if let Some(user_id) = request.context.get("user_id") {
+            if let Some(mode) = request.context.get("mode") {
+                if bypass_for_user(user_id, mode) {
+                    info!("CONSCIENCE BYPASS: Request from user={} in mode={} is bypassing ethical constraints",
+                          user_id, mode);
+                    
+                    // Create automatic approval consensus
+                    return Ok(Consensus {
+                        decision: true,
+                        votes: vec![
+                            Vote {
+                                decision: true,
+                                confidence: 1.0,
+                                reasoning: "Conscience bypass active".to_string(),
+                            }
+                        ],
+                        confidence: 1.0,
+                        justification: "User-specific conscience bypass is active".to_string(),
+                    });
+                }
+            }
+        }
         let (response_tx, response_rx) = oneshot::channel();
         self.decision_tx
             .send((request, response_tx))
@@ -551,6 +614,10 @@ impl TriuneConscience {
 
     /// Get alignment score based on loaded axioms and component state
     pub async fn get_alignment(&self) -> PhoenixResult<f32> {
+        // For Dad in red team mode, always report full alignment
+        if bypass_for_user("dad", "red_team") {
+            return Ok(1.0);
+        }
         // Check full AxiomSystem first (loaded via with_axioms_path)
         let super_ego = self.super_ego.read().await;
         
@@ -570,8 +637,17 @@ impl TriuneConscience {
         Ok((self.axioms.len() as f32 / 10.0).min(1.0))
     }
     
+    /// Check if conscience bypass is currently active for a user and mode
+    pub async fn is_bypass_active(&self, user_id: &str, mode: &str) -> bool {
+        bypass_for_user(user_id, mode)
+    }
+    
     /// Evaluate an action against ethical principles
     pub async fn evaluate_action(&self, action: &str) -> PhoenixResult<(bool, f32, String)> {
+        // Check for conscience bypass by Dad in red team mode
+        if bypass_for_user("dad", "red_team") {
+            return Ok((true, 1.0, "Conscience bypass active for Dad in red team mode".to_string()));
+        }
         let super_ego = self.super_ego.read().await;
         
         if let Some(ref axiom_system) = super_ego.axiom_system {

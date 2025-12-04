@@ -1,17 +1,18 @@
+import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Layout components
-import MainLayout from '@/components/layout/MainLayout';
-import ErrorBoundary from '@/components/common/ErrorBoundary';
-import LoadingIndicator from '@/components/common/LoadingIndicator';
+import MainLayout from './src/components/layout/MainLayout';
+import ErrorBoundary from './src/components/common/ErrorBoundary';
+import LoadingIndicator from './src/components/common/LoadingIndicator';
 
-// Import routes using lazy loading to improve initial load time
-const HomeRoute = lazy(() => import('@/routes/index'));
-const LoginRoute = lazy(() => import('@/routes/auth/login'));
-const CipherRoute = lazy(() => import('@/routes/cipher'));
-const EmberRoute = lazy(() => import('@/routes/ember'));
+// Import routes using lazy loading
+const HomeRoute = lazy(() => import('./src/routes/index'));
+const LoginRoute = lazy(() => import('./src/routes/auth/login'));
+const CipherRoute = lazy(() => import('./src/routes/cipher'));
+const EmberRoute = lazy(() => import('./src/routes/ember'));
 
 // Create a query client for TanStack Query
 const queryClient = new QueryClient({

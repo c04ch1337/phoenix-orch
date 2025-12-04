@@ -1,0 +1,68 @@
+# Phoenix Orch - Performance Benchmark Suite Configuration
+# This file configures the benchmark suite for different hardware platforms
+
+[general]
+# Global settings for all benchmarks
+report_dir = "~/Desktop/phoenix-benchmarks-{date}"  # {date} will be replaced with YYYYMMDD
+html_reports = true
+regression_threshold_percent = 5.0  # CI fails if performance degrades by this percent
+frequency = "nightly"  # When to run in CI: "commit", "nightly", or "weekly"
+
+# Baseline targets from specifications
+[baseline_targets]
+cold_start_ms = 1800.0              # 1.8s
+thought_action_ms = 400.0           # 400ms
+voice_action_ms = 1400.0            # 1.4s
+face_auth_ms = 180.0                # 180ms
+kb_search_cold_ms = 80.0            # 80ms
+kb_search_warm_ms = 30.0            # 30ms
+scene_execution_ms = 2100.0         # 2.1s
+idle_ram_mb = 180.0                 # 180 MB
+recording_gb_per_day = 8.0          # 8 GB/day
+binary_size_mb = 68.0               # 68 MB
+stress_test_survive_percent = 99.0  # At least 99% must survive
+stress_test_max_latency_ms = 2500.0 # 2.5s max latency
+
+# Platform-specific configurations
+[platforms.macbook_2018]
+name = "2018 MacBook Pro"
+identifier = "MacBookPro15"  # macOS hw.model identifier pattern
+adjustment_factor = 1.0      # Baseline reference platform, no adjustment
+test_count = 3               # Number of test iterations to run
+
+[platforms.macbook_m3max]
+name = "M3 Max MacBook Pro"
+identifier = "Mac14"         # macOS hw.model identifier pattern
+adjustment_factor = 0.7      # 30% faster than baseline expected
+test_count = 3               # Number of test iterations to run
+
+[platforms.windows_gaming]
+name = "Windows 11 Gaming Laptop"
+identifier = "NVIDIA|AMD"    # GPU pattern for Windows gaming laptops
+adjustment_factor = 0.8      # 20% faster than baseline expected
+test_count = 3               # Number of test iterations to run
+
+[platforms.ubuntu_server]
+name = "Ubuntu 24.04 Server"
+identifier = "Ubuntu 24.04"  # OS release pattern
+adjustment_factor = 0.9      # 10% faster than baseline expected
+test_count = 5               # More iterations for server headless testing
+
+# CI Integration Settings
+[ci]
+enabled = true
+fail_on_regression = true
+upload_results = true
+notify_on_failure = true
+archive_reports = true
+
+# Artifact paths for binary size measurements
+[artifacts]
+release_binary = "target/release/phoenix-orch"
+debug_binary = "target/debug/phoenix-orch"
+
+# Stress test configuration
+[stress_test]
+voice_command_count = 10000
+voice_command_duration_seconds = 60
+neuralink_thought_count = 100

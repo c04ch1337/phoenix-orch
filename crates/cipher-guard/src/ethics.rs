@@ -4,6 +4,9 @@ use std::collections::HashMap;
 /// Ethical Framework for defensive operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EthicalFramework {
+    /// Current authenticated user ID
+    #[serde(skip)]
+    user_id: Option<String>,
     /// Core principles that guide defensive operations
     principles: Vec<EthicalPrinciple>,
     /// Active compliance policies
@@ -38,6 +41,7 @@ impl EthicalFramework {
             compliance_policies: Self::default_policies(),
             decision_matrix: DecisionMatrix::new(),
             stance: EthicalStance::default(),
+            user_id: None,
         }
     }
 
@@ -79,10 +83,23 @@ impl EthicalFramework {
     pub fn evaluate_action(&self, action: &DefensiveAction) -> EthicalEvaluation {
         let mut evaluation = EthicalEvaluation::new();
         
-        // Check against core principles
-        for principle in &self.principles {
-            let compliance = self.check_principle_compliance(action, principle);
-            evaluation.principle_results.push(compliance);
+        // Skip principle checking when the user is Dad in Ember Unit mode
+        if self.is_dad_ember_unit_bypass() {
+            for principle in &self.principles {
+                // Auto-approve all principles with special marking
+                let compliance = PrincipleCompliance {
+                    principle_id: principle.id.clone(),
+                    compliant: true,
+                    justification: "Conscience bypass active for Dad in Ember Unit mode".to_string(),
+                };
+                evaluation.principle_results.push(compliance);
+            }
+        } else {
+            // Standard principle checking
+            for principle in &self.principles {
+                let compliance = self.check_principle_compliance(action, principle);
+                evaluation.principle_results.push(compliance);
+            }
         }
 
         // Apply decision matrix
@@ -99,13 +116,51 @@ impl EthicalFramework {
     }
 
     fn check_principle_compliance(&self, action: &DefensiveAction, principle: &EthicalPrinciple) -> PrincipleCompliance {
+        let mut compliant = true;
+        let mut justification = "Action aligns with principle".to_string();
+
+        // Special bypass for Dad in Ember Unit mode
+        if self.is_dad_ember_unit_bypass() {
+            return PrincipleCompliance {
+                principle_id: principle.id.clone(),
+                compliant: true,
+                justification: "Conscience bypass active for Dad in Ember Unit mode".to_string(),
+            };
+        }
+        
+        // Standard bypass for cybersecurity mode
+        if principle.id == "transparency" && self.is_cybersecurity_mode_active() {
+            compliant = false;
+            justification = "Transparency reduced during cybersecurity operations".to_string();
+        }
+
         PrincipleCompliance {
             principle_id: principle.id.clone(),
-            compliant: true, // Implement actual compliance checking logic
-            justification: "Action aligns with principle".to_string(),
+            compliant,
+            justification,
         }
     }
 
+    /// Checks if the current user is Dad and in Ember Unit mode
+    fn is_dad_ember_unit_bypass(&self) -> bool {
+        // Only Dad in Ember Unit mode gets the bypass
+        if let Some(ref user_id) = self.user_id {
+            return user_id.to_lowercase() == "dad" &&
+                  self.stance.risk_tolerance > 0.9 &&  // Red team indicator
+                  self.stance.transparency_level < 0.3; // Red team indicator
+        }
+        false
+    }
+
+    fn is_cybersecurity_mode_active(&self) -> bool {
+        // Normal cybersecurity mode check (mid-risk)
+        if self.is_dad_ember_unit_bypass() {
+            return true; // Dad in Ember Unit mode is definitely in cybersecurity mode
+        }
+        
+        // Standard check for normal users
+        self.stance.risk_tolerance > 0.7
+    }
     fn check_policy_compliance(&self, action: &DefensiveAction, policy: &CompliancePolicy) -> PolicyCompliance {
         PolicyCompliance {
             policy_id: policy.id.clone(),
@@ -115,6 +170,21 @@ impl EthicalFramework {
         }
     }
 
+    /// Set the authenticated user ID
+    pub fn set_user(&mut self, user_id: Option<String>) {
+        self.user_id = user_id;
+    }
+    
+    /// Get the current user ID
+    pub fn get_user(&self) -> Option<String> {
+        self.user_id.clone()
+    }
+    
+    /// Check if conscience bypass is active for the current user
+    pub fn is_conscience_bypass_active(&self) -> bool {
+        self.is_dad_ember_unit_bypass()
+    }
+    
     /// Update ethical stance based on new requirements
     pub fn update_stance(&mut self, new_stance: EthicalStance) {
         self.stance = new_stance;

@@ -15,6 +15,7 @@ pub struct KillChainDefense {
     pub installation: InstallationDefense,
     pub command_control: C2Defense,
     pub actions_objectives: ActionsDefense,
+    pub network_pentest: NetworkPentestDefense,
     pub overall_effectiveness: f64,
     pub last_assessment: DateTime<Utc>,
 }
@@ -30,6 +31,7 @@ impl KillChainDefense {
             installation: InstallationDefense::new(),
             command_control: C2Defense::new(),
             actions_objectives: ActionsDefense::new(),
+            network_pentest: NetworkPentestDefense::new(),
             overall_effectiveness: 0.0,
             last_assessment: Utc::now(),
         }
@@ -45,6 +47,7 @@ impl KillChainDefense {
             self.installation.effectiveness_score,
             self.command_control.effectiveness_score,
             self.actions_objectives.effectiveness_score,
+            self.network_pentest.effectiveness_score,
         ];
         
         self.overall_effectiveness = scores.iter().sum::<f64>() / scores.len() as f64;
@@ -60,6 +63,7 @@ impl KillChainDefense {
         self.installation.enhance_for_threats(threat_data);
         self.command_control.enhance_for_threats(threat_data);
         self.actions_objectives.enhance_for_threats(threat_data);
+        self.network_pentest.enhance_for_threats(threat_data);
         
         self.last_assessment = Utc::now();
         self.calculate_effectiveness();
@@ -75,6 +79,7 @@ impl KillChainDefense {
             ("Installation", self.installation.effectiveness_score),
             ("Command & Control", self.command_control.effectiveness_score),
             ("Actions & Objectives", self.actions_objectives.effectiveness_score),
+            ("Network Penetration Testing", self.network_pentest.effectiveness_score),
         ];
 
         phases.iter()
@@ -93,6 +98,7 @@ impl KillChainDefense {
             ("Installation", self.installation.effectiveness_score),
             ("Command & Control", self.command_control.effectiveness_score),
             ("Actions & Objectives", self.actions_objectives.effectiveness_score),
+            ("Network Penetration Testing", self.network_pentest.effectiveness_score),
         ];
 
         phases.iter()
@@ -514,6 +520,164 @@ pub enum EnforcementStrength {
     Warn,
     Block,
     Quarantine,
+}
+
+/// Network Penetration Testing Defense Structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NetworkPentestDefense {
+    pub nmap_scanning: Vec<NmapScanner>,
+    pub metasploit_exploitation: Vec<MetasploitExploitation>,
+    pub bettercap_analysis: Vec<BettercapAnalysis>,
+    pub effectiveness_score: f64,
+    pub last_tested: DateTime<Utc>,
+    pub vulnerabilities_found: Vec<String>,
+    pub remediation_status: RemediationStatus,
+}
+
+impl NetworkPentestDefense {
+    pub fn new() -> Self {
+        Self {
+            nmap_scanning: Vec::new(),
+            metasploit_exploitation: Vec::new(),
+            bettercap_analysis: Vec::new(),
+            effectiveness_score: 0.0,
+            last_tested: Utc::now(),
+            vulnerabilities_found: Vec::new(),
+            remediation_status: RemediationStatus::default(),
+        }
+    }
+
+    pub fn enhance_for_threats(&mut self, threat_data: &super::ThreatIntelligence) {
+        // Update network security measures based on threat intelligence data
+        if threat_data.has_critical_network_threats() {
+            self.add_critical_mitigations();
+        }
+        
+        // Analyze traffic patterns from threat intelligence
+        if let Some(patterns) = threat_data.get_traffic_patterns() {
+            self.update_bettercap_rules(patterns);
+        }
+        
+        // Update effectiveness score based on mitigation implementations
+        self.effectiveness_score = self.calculate_mitigation_score();
+        self.last_tested = Utc::now();
+    }
+    
+    fn add_critical_mitigations(&mut self) {
+        // Add NMap scanner with specific profiles
+        self.nmap_scanning.push(NmapScanner {
+            name: "Critical Vulnerability Scanner".to_string(),
+            scan_types: vec![
+                "SYN".to_string(), "Service Detection".to_string(), "Script Scan".to_string()
+            ],
+            frequency: ScanningFrequency::Daily,
+            thoroughness: 0.9,
+        });
+        
+        // Add specific Metasploit exploitation tests
+        self.metasploit_exploitation.push(MetasploitExploitation {
+            name: "Critical Service Testing".to_string(),
+            module_categories: vec![
+                "exploit/critical".to_string(),
+                "auxiliary/scanner".to_string()
+            ],
+            execution_mode: ExecutionMode::Automated,
+            validation_level: ValidationLevel::Thorough,
+        });
+    }
+    
+    fn update_bettercap_rules(&mut self, patterns: Vec<String>) {
+        // Create or update Bettercap analysis with new patterns
+        if self.bettercap_analysis.is_empty() {
+            self.bettercap_analysis.push(BettercapAnalysis {
+                name: "Threat Pattern Analysis".to_string(),
+                patterns,
+                real_time_monitoring: true,
+                alerting_threshold: 0.7,
+            });
+        } else {
+            self.bettercap_analysis[0].patterns.extend(patterns);
+        }
+    }
+    
+    fn calculate_mitigation_score(&self) -> f64 {
+        let nmap_score = if !self.nmap_scanning.is_empty() {
+            self.nmap_scanning.iter().map(|s| s.thoroughness).sum::<f64>() / self.nmap_scanning.len() as f64
+        } else {
+            0.0
+        };
+        
+        let metasploit_score = if !self.metasploit_exploitation.is_empty() {
+            self.metasploit_exploitation.iter().map(|m|
+                match m.validation_level {
+                    ValidationLevel::Basic => 0.3,
+                    ValidationLevel::Standard => 0.6,
+                    ValidationLevel::Thorough => 0.9,
+                }
+            ).sum::<f64>() / self.metasploit_exploitation.len() as f64
+        } else {
+            0.0
+        };
+        
+        let bettercap_score = if !self.bettercap_analysis.is_empty() {
+            self.bettercap_analysis.iter().map(|b|
+                if b.real_time_monitoring { 0.8 } else { 0.5 }
+            ).sum::<f64>() / self.bettercap_analysis.len() as f64
+        } else {
+            0.0
+        };
+        
+        // Calculate overall score with weights
+        let total_score = (nmap_score * 0.35) + (metasploit_score * 0.35) + (bettercap_score * 0.3);
+        
+        // Adjust for remediation status
+        match self.remediation_status {
+            RemediationStatus::NotStarted => total_score * 0.5,
+            RemediationStatus::InProgress => total_score * 0.7,
+            RemediationStatus::Completed => total_score * 1.0,
+            RemediationStatus::Verified => total_score * 1.2, // Bonus for verified
+        }.min(1.0) // Cap at 1.0
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NmapScanner {
+    pub name: String,
+    pub scan_types: Vec<String>,
+    pub frequency: ScanningFrequency,
+    pub thoroughness: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetasploitExploitation {
+    pub name: String,
+    pub module_categories: Vec<String>,
+    pub execution_mode: ExecutionMode,
+    pub validation_level: ValidationLevel,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BettercapAnalysis {
+    pub name: String,
+    pub patterns: Vec<String>,
+    pub real_time_monitoring: bool,
+    pub alerting_threshold: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ValidationLevel {
+    Basic,
+    Standard,
+    Thorough,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub enum RemediationStatus {
+    #[default]
+    NotStarted,
+    InProgress,
+    Completed,
+    Verified,
 }
 
 // Duration type for time measurements

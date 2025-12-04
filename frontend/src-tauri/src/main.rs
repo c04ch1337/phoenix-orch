@@ -8,7 +8,19 @@ mod modules;
 use modules::{
     cipher::CipherModule,
     ember::EmberModule,
-    orchestrator::{OrchestratorModule, invoke_orchestrator_task, submit_reviewed_task},
+    orchestrator::{
+        OrchestratorModule, 
+        invoke_orchestrator_task, 
+        submit_reviewed_task,
+        filesystem_list_drives,
+        filesystem_read_file,
+        filesystem_write_file,
+        filesystem_list_directory,
+        filesystem_search_files,
+        filesystem_create_directory,
+        filesystem_create_file,
+        filesystem_delete_item,
+    },
     security::SecurityModule,
     state::AppState,
 };
@@ -195,9 +207,18 @@ fn main() {
             execute_ember_operation,
             validate_memory_integrity,
             ignite_phoenix,
-            // Add orchestrator commands
+            // Orchestrator commands
             invoke_orchestrator_task,
             submit_reviewed_task,
+            // Filesystem commands
+            filesystem_list_drives,
+            filesystem_read_file,
+            filesystem_write_file,
+            filesystem_list_directory,
+            filesystem_search_files,
+            filesystem_create_directory,
+            filesystem_create_file,
+            filesystem_delete_item,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

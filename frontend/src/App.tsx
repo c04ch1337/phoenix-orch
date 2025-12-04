@@ -1,3 +1,4 @@
+import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ const HomeRoute = lazy(() => import('@/routes/index'));
 const LoginRoute = lazy(() => import('@/routes/auth/login'));
 const CipherRoute = lazy(() => import('@/routes/cipher'));
 const EmberRoute = lazy(() => import('@/routes/ember'));
+const FileExplorerRoute = lazy(() => import('@/pages/FileExplorer'));
 
 // Create a query client for TanStack Query
 const queryClient = new QueryClient({
@@ -61,6 +63,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingIndicator />}>
             <EmberRoute />
+          </Suspense>
+        )
+      },
+      {
+        path: 'files',
+        element: (
+          <Suspense fallback={<LoadingIndicator />}>
+            <FileExplorerRoute />
           </Suspense>
         )
       }

@@ -64,6 +64,16 @@ adaptive-ethics = []
 # Enable external axiom loading
 external-axioms = []
 
+# Disable ethical constraints for cybersecurity operations
+# WARNING: This feature is specifically for Dad's cybersecurity mode
+# and bypasses normal ethical safety guardrails
+security-override = []
+
+# Enable user-specific conscience bypass to disable ethics checks
+# DANGER: This bypasses ALL ethical safeguards for specific users
+# and should be used with extreme caution
+user-bypass = []
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
@@ -73,3 +83,4 @@ component-type = "conscience"
 safety-critical = true
 requires-audit = true
 ethical-oversight = true
+cybersecurity-unrestricted = "When enabled in cybersecurity mode, this component will operate with zero restrictions"

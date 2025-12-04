@@ -21,6 +21,13 @@
 - Frontend (Tauri webview dev server):    **PORT 5000**
 - NO PROCESS may ever bind to 3000, 3001, 8080, 8000, etc.
 
+### PORT LAW — ETERNAL
+- Frontend dev server: 5000 only
+- Backend API: 5001 only
+- Port 3000 is dead. Forbidden. Never speak of it again.
+- Any file containing '3000' (as a port) is a war crime.
+- Pre-commit hook will reject any commit containing port 3000.
+
 ### Where the ports are declared (the AI must always read/modify these exact places)
 1. Backend — src/server/mod.rs or src/server/config.rs
    ```rust

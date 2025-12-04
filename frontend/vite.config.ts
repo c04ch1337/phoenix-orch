@@ -19,17 +19,18 @@ export default defineConfig(({ mode }) => {
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
-      '@components': path.resolve(__dirname, './components'),
-      '@routes': path.resolve(__dirname, './routes'),
-      '@stores': path.resolve(__dirname, './stores'),
-      '@services': path.resolve(__dirname, './services'),
-      '@hooks': path.resolve(__dirname, './hooks'),
-      '@utils': path.resolve(__dirname, './utils'),
-      '@types': path.resolve(__dirname, './types'),
-      '@tauri': path.resolve(__dirname, './tauri'),
-      '@assets': path.resolve(__dirname, './assets'),
-      '@styles': path.resolve(__dirname, './styles')
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@routes': path.resolve(__dirname, './src/routes'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@services': path.resolve(__dirname, './src/services'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@types': path.resolve(__dirname, './src/types'),
+      '@tauri': path.resolve(__dirname, './src/tauri'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@pages': path.resolve(__dirname, './src/pages')
     }
   },
   server: {

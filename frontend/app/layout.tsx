@@ -2,11 +2,13 @@
 
 import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Flame, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { PhoenixLogo } from "@/components/PhoenixLogo";
-import { PhoenixContextPanel } from "@/features/system";
-import { ClientInitialization } from "@/components/ClientInitialization";
-import { TwinFlameWrapper } from "@/components/TwinFlameWrapper";
-import MatrixRain from "@/components/MatrixRain";
+import { PhoenixLogo } from "./components/PhoenixLogo";
+import { PhoenixContextPanel } from "./features/system";
+import { ClientInitialization } from "./components/ClientInitialization";
+import { TwinFlameWrapper } from "./components/TwinFlameWrapper";
+import MatrixRain from "./components/MatrixRain";
+import UniversalOrchestratorBar from "./components/UniversalOrchestratorBar";
+import VoiceTriggerInitializer from "./components/VoiceTriggerInitializer";
 // ZustandProvider removed - using PhoenixContext only
 import "@/globals.css";
 
@@ -14,7 +16,7 @@ import "@/globals.css";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Dynamically import services to avoid SSR issues
-const ServiceInitializer = lazy(() => import('@/components/ServiceInitializer'));
+const ServiceInitializer = lazy(() => import('./components/ServiceInitializer'));
 
 // Font variables (simplified implementation)
 const fontVariables = {
@@ -153,6 +155,7 @@ export default function RootLayout({
             
             {/* Client-side initialization and services */}
             <ClientInitialization />
+            <VoiceTriggerInitializer />
             <Suspense fallback={<div>Loading services...</div>}>
               <ServiceInitializer
                 onConnectionChange={setIsConnected}
@@ -234,7 +237,10 @@ export default function RootLayout({
             {/* Main content wrapper */}
             <div className="relative z-10 flex-1 flex h-[calc(100vh-64px)]">
               <TwinFlameWrapper />
-              <PhoenixLogo className="fixed bottom-4 left-4 z-50" />
+              <PhoenixLogo className="fixed bottom-4 left-4 z-40" />
+              
+              {/* Universal Orchestrator Bar - appears on all pages */}
+              <UniversalOrchestratorBar />
               
               {/* Render page content */}
               {children}

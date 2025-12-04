@@ -14,9 +14,32 @@ use serde::{Serialize, Deserialize};
 use crate::modules::orchestrator::errors::{PhoenixResult, PhoenixError, AgentErrorKind};
 use crate::modules::orchestrator::tools::ToolParameters;
 use crate::modules::orchestrator::types::{
-    ConscienceRequest, ConscienceResult, RequestId, RequestOrigin, 
+    ConscienceRequest, ConscienceResult, RequestId, RequestOrigin,
     RiskLevel, HitmStatus, HitmResponse, AuditRecord
 };
+
+// Mobile conscience gate integration
+pub mod mobile_gate;
+use mobile_gate::MobileConscienceGate;
+
+/// Extended conscience configuration with mobile gate options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConscienceConfig {
+    /// HITM configuration for human intervention
+    pub hitm_config: HitmConfig,
+    
+    /// Audit log capacity
+    pub audit_log_capacity: usize,
+    
+    /// Violation log capacity
+    pub violation_log_capacity: usize,
+    
+    /// Whether to enable advanced pattern detection
+    pub enable_advanced_detection: bool,
+    
+    /// Whether to enable mobile conscience gate
+    pub enable_mobile_gate: bool,
+}
 
 /// HITM configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,6 +104,7 @@ impl Default for ConscienceConfig {
             audit_log_capacity: 1000,
             violation_log_capacity: 100,
             enable_advanced_detection: true,
+            enable_mobile_gate: true,  // Enable mobile gate by default
         }
     }
 }
@@ -130,6 +154,12 @@ pub struct ConscienceGate {
     
     /// Whether to enable advanced detection of sensitive patterns
     enable_advanced_detection: bool,
+    
+    /// Mobile conscience gate for mobile-specific evaluations
+    mobile_gate: Option<MobileConscienceGate>,
+    
+    /// Whether mobile gate is enabled
+    enable_mobile_gate: bool,
 }
 
 impl ConscienceGate {
@@ -138,6 +168,12 @@ impl ConscienceGate {
         config: ConscienceConfig,
         human_review_service: Option<Arc<dyn HumanReviewService>>,
     ) -> PhoenixResult<Self> {
+        let mobile_gate = if config.enable_mobile_gate {
+            Some(MobileConscienceGate::new())
+        } else {
+            None
+        };
+
         Ok(Self {
             hitm_config: config.hitm_config,
             audit_trail: VecDeque::with_capacity(config.audit_log_capacity),
@@ -145,11 +181,35 @@ impl ConscienceGate {
             pending_reviews: HashMap::new(),
             human_review_service,
             enable_advanced_detection: config.enable_advanced_detection,
+            mobile_gate,
+            enable_mobile_gate: config.enable_mobile_gate,
         })
     }
     
     /// Evaluate a request against ethical principles
     pub async fn evaluate(&self, request: ConscienceRequest) -> PhoenixResult<ConscienceResult> {
+        // First, check if this is a mobile action and mobile gate is enabled
+        if self.enable_mobile_gate && self.mobile_gate.is_some() {
+            // Use mobile gate for mobile-specific evaluations
+            let mobile_gate = self.mobile_gate.as_ref().unwrap();
+            
+            // Check if this is a mobile action using the mobile gate's detection
+            if mobile_gate::MobileActionType::from_request(&request).is_some() {
+                let mobile_result = mobile_gate.evaluate(&request);
+                
+                // Record the evaluation for audit purposes
+                self.record_evaluation(&request, &mobile_result);
+                
+                // If human review is required and enabled, initiate the HITM process
+                if mobile_result.requires_human_review && self.hitm_config.enabled && self.human_review_service.is_some() {
+                    return self.handle_hitm_review(request, mobile_result).await;
+                }
+                
+                return Ok(mobile_result);
+            }
+        }
+        
+        // Fall back to standard evaluation for non-mobile actions
         // Check for sensitive patterns in the action
         let sensitive_patterns = self.check_sensitive_patterns(&request);
         
@@ -179,8 +239,8 @@ impl ConscienceGate {
         };
         
         // Determine if human review is required
-        let requires_human_review = 
-            (self.hitm_config.enabled && confidence < self.hitm_config.confidence_threshold) || 
+        let requires_human_review =
+            (self.hitm_config.enabled && confidence < self.hitm_config.confidence_threshold) ||
             risk_level == RiskLevel::Medium ||
             (sensitive_patterns && !contains_sensitive_data) || // Ambiguous cases
             self.is_borderline_case(&request);
@@ -561,6 +621,33 @@ impl ConscienceGate {
     /// Clear the violation history
     pub fn clear_violation_history(&mut self) {
         self.violation_history.clear();
+    }
+
+    /// Add or update a mobile context profile
+    pub fn add_mobile_profile(&mut self, name: String, profile: mobile_gate::MobileContextProfile) -> PhoenixResult<()> {
+        if let Some(mobile_gate) = &mut self.mobile_gate {
+            mobile_gate.add_profile(name, profile);
+            Ok(())
+        } else {
+            Err(PhoenixError::AgentError(AgentErrorKind::ConfigurationError(
+                "Mobile gate is not enabled".to_string()
+            )))
+        }
+    }
+
+    /// Get the mobile gate instance (for testing and advanced configuration)
+    pub fn mobile_gate(&self) -> Option<&MobileConscienceGate> {
+        self.mobile_gate.as_ref()
+    }
+
+    /// Enable or disable the mobile gate
+    pub fn set_mobile_gate_enabled(&mut self, enabled: bool) {
+        self.enable_mobile_gate = enabled;
+        if enabled && self.mobile_gate.is_none() {
+            self.mobile_gate = Some(MobileConscienceGate::new());
+        } else if !enabled {
+            self.mobile_gate = None;
+        }
     }
 }
 

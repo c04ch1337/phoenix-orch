@@ -1,7 +1,7 @@
 // Export all modules for use in main.rs
 pub mod cipher;
 pub mod ember;
-pub mod orchestrator;
+pub mod orchestrator;  // This is a wrapper that bridges to root orchestrator
 pub mod security;
 pub mod state;
 pub mod sse;

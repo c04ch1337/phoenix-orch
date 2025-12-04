@@ -10,6 +10,7 @@ use crate::{
     safety::{SafetyApi, OperationRequest, ShutdownRequest},
     reporting::{ReportingApi, ReportRequest as ReportingRequest},
     error::EmberUnitError,
+    network_scanner::{NetworkScannerApi, NetworkScanRequest, NetworkScanResult, ScanType},
 };
 
 /// Consolidated API endpoints for Ember Unit
@@ -36,6 +37,9 @@ impl EmberUnitApi {
         // Reporting endpoints
         let reporting_routes = ReportingApi::routes();
         
+        // Network scanning endpoints
+        let network_scanner_routes = NetworkScannerApi::routes();
+        
         // Combine all routes
         engagement_routes
             .or(c2_routes)
@@ -43,6 +47,7 @@ impl EmberUnitApi {
             .or(services_routes)
             .or(safety_routes)
             .or(reporting_routes)
+            .or(network_scanner_routes)
             .or(Self::health_check())
             .or(Self::status_endpoint())
     }
@@ -192,6 +197,7 @@ pub fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, std::c
             EmberUnitError::EngagementError(_) => warp::http::StatusCode::NOT_FOUND,
             EmberUnitError::C2Error(_) => warp::http::StatusCode::BAD_REQUEST,
             EmberUnitError::AgentError(_) => warp::http::StatusCode::BAD_REQUEST,
+            EmberUnitError::NetworkError(_) => warp::http::StatusCode::BAD_REQUEST,
             _ => warp::http::StatusCode::INTERNAL_SERVER_ERROR,
         };
         

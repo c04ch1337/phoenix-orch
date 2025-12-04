@@ -7,8 +7,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { usePhoenixStore } from '../../stores/phoenixStore';
-import LoadingIndicator from '../../components/common/LoadingIndicator';
+import { usePhoenixStore } from '@/stores/phoenixStore';
+import LoadingIndicator from '@/components/common/LoadingIndicator';
 
 // Type definition for an Ember unit
 interface EmberUnit {

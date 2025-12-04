@@ -1,6 +1,6 @@
 'use client';
 
-import { VoiceStatus, VoiceTranscript } from '@/types';
+import { VoiceStatus, VoiceTranscript } from '../types';
 
 type VoiceStatusCallback = (status: VoiceStatus) => void;
 type VoiceTranscriptCallback = (result: VoiceTranscript) => void;
@@ -9,7 +9,7 @@ class VoiceService {
   private enabled = false;
   private listening = false;
   private speaking = false;
-  private recognition: SpeechRecognition | null = null;
+  private recognition: any = null;
   private synthesis: SpeechSynthesis | null = null;
   private statusCallbacks: Set<VoiceStatusCallback> = new Set();
   private transcriptCallbacks: Set<VoiceTranscriptCallback> = new Set();
@@ -25,7 +25,7 @@ class VoiceService {
         this.recognition.interimResults = true;
         this.recognition.lang = 'en-US';
 
-        this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+        this.recognition.onresult = (event: any) => {
           const current = event.resultIndex;
           const transcript = event.results[current][0]?.transcript || '';
           const isFinal = event.results[current]?.isFinal || false;
@@ -39,7 +39,7 @@ class VoiceService {
           });
         };
 
-        this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        this.recognition.onerror = (event: any) => {
           console.error('🔥 Voice: Recognition error', event.error);
           if (event.error === 'no-speech' || event.error === 'audio-capture') {
             this.listening = false;
@@ -174,7 +174,7 @@ class VoiceService {
     this.statusCallbacks.forEach(callback => callback(status));
   }
 
-  private getStatus(): VoiceStatus {
+  getStatus(): VoiceStatus {
     return {
       enabled: this.enabled,
       listening: this.listening,

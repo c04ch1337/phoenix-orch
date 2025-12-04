@@ -1,72 +1,115 @@
-import { WebSocket } from 'ws';
-import { mockServer } from './mocks/server';
+import { createWebSocketClient } from '../lib/socket';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import type { Mock } from 'vitest';
 
-describe('WebSocket Testing Framework', () => {
-  let client: WebSocket;
+// Create a complete mock WebSocket that satisfies the WebSocket interface
+interface MockWebSocket {
+  send: Mock;
+  close: Mock;
+  readyState: number;
+  onopen: ((this: WebSocket, ev: Event) => any) | null;
+  onmessage: ((this: WebSocket, ev: MessageEvent) => any) | null;
+  onclose: ((this: WebSocket, ev: CloseEvent) => any) | null;
+  onerror: ((this: WebSocket, ev: Event) => any) | null;
+  addEventListener: Mock;
+  removeEventListener: Mock;
+  dispatchEvent: Mock;
+  CONNECTING: number;
+  OPEN: number;
+  CLOSING: number;
+  CLOSED: number;
+  url: string;
+  protocol: string;
+  extensions: string;
+  bufferedAmount: number;
+  binaryType: BinaryType;
+}
 
-  beforeEach((done) => {
-    client = new WebSocket('ws://localhost:5001');
-    client.on('open', () => {
-      done();
-    });
+describe('WebSocket Client', () => {
+  const mockWebSocket: MockWebSocket = {
+    send: vi.fn(),
+    close: vi.fn(),
+    readyState: WebSocket.OPEN,
+    onopen: null,
+    onmessage: null,
+    onclose: null,
+    onerror: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+    CONNECTING: WebSocket.CONNECTING,
+    OPEN: WebSocket.OPEN,
+    CLOSING: WebSocket.CLOSING,
+    CLOSED: WebSocket.CLOSED,
+    url: '',
+    protocol: '',
+    extensions: '',
+    bufferedAmount: 0,
+    binaryType: 'blob',
+  };
+
+  // Mock the WebSocket constructor
+  window.WebSocket = vi.fn().mockImplementation(() => mockWebSocket) as any;
+
+  let client: ReturnType<typeof createWebSocketClient>;
+
+  beforeEach(() => {
+    client = createWebSocketClient('ws://localhost:5001');
+    client.connect();
   });
 
-  afterEach((done) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.close();
-    }
-    mockServer.clearMessageLog();
-    done();
-  });
-
-  afterAll((done) => {
-    mockServer.close();
-    done();
+  afterEach(() => {
+    client.disconnect();
+    vi.clearAllMocks();
   });
 
   it('establishes connection successfully', () => {
-    expect(client.readyState).toBe(WebSocket.OPEN);
+    expect(window.WebSocket).toHaveBeenCalledWith('ws://localhost:5001');
   });
 
-  it('sends and receives messages', (done) => {
-    const testMessage = { type: 'test', content: 'Hello Server' };
+  it('sends messages correctly', () => {
+    const message = { type: 'test', content: 'Hello Server' };
+    client.send(message);
+    expect(mockWebSocket.send).toHaveBeenCalledWith(JSON.stringify(message));
+  });
+
+  it('handles received messages', () => {
+    const message = { type: 'test', content: 'Test Message' };
+    const mockMessageHandler = vi.fn();
     
-    mockServer.on('message', (message) => {
-      expect(message).toEqual(testMessage);
-      
-      // Server responds
-      const response = { type: 'response', content: 'Hello Client' };
-      mockServer.broadcast(response);
+    client.on('message', mockMessageHandler);
+    
+    // Simulate receiving a message
+    const event = new MessageEvent('message', {
+      data: JSON.stringify(message)
     });
+    mockWebSocket.onmessage?.call(mockWebSocket as WebSocket, event);
 
-    client.on('message', (data) => {
-      const message = JSON.parse(data.toString());
-      expect(message).toEqual({ type: 'response', content: 'Hello Client' });
-      done();
-    });
-
-    client.send(JSON.stringify(testMessage));
+    expect(mockMessageHandler).toHaveBeenCalledWith(message);
   });
 
-  it('handles disconnection', (done) => {
-    mockServer.on('disconnect', () => {
-      expect(client.readyState).toBe(WebSocket.CLOSED);
-      done();
+  it('maintains message log', () => {
+    const message = { type: 'test', content: 'Test Message' };
+    
+    // Simulate receiving a message
+    const event = new MessageEvent('message', {
+      data: JSON.stringify(message)
     });
+    mockWebSocket.onmessage?.call(mockWebSocket as unknown as WebSocket, event);
 
-    client.close();
+    const log = client.getMessageLog();
+    expect(log).toHaveLength(1);
+    expect(log[0]).toEqual(message);
   });
 
-  it('maintains message log', (done) => {
-    const testMessage = { type: 'test', content: 'Test Message' };
-
-    mockServer.on('message', () => {
-      const log = mockServer.getMessageLog();
-      expect(log).toHaveLength(1);
-      expect(log[0]).toEqual(testMessage);
-      done();
-    });
-
-    client.send(JSON.stringify(testMessage));
+  it('handles disconnection', () => {
+    const mockDisconnectHandler = vi.fn();
+    client.on('disconnected', mockDisconnectHandler);
+    
+    // Simulate connection close
+    const closeEvent = new CloseEvent('close');
+    mockWebSocket.onclose?.call(mockWebSocket, closeEvent);
+    
+    expect(mockDisconnectHandler).toHaveBeenCalled();
   });
 });

@@ -4,6 +4,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time::Duration;
 
+// Include our test modules
+pub mod disk_encryption_test;
+pub mod knowledge_base_test;
+pub mod file_system_test;
+
 use crate::{
     CipherGuard,
     DefensiveOperation,

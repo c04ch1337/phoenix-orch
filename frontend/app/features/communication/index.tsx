@@ -1,21 +1,9 @@
-import MemoryTimelineComponent from './components/MemoryTimeline';
+// Export all Neural Emotion Visualization components
+export { default as EmotionTimeline } from './components/EmotionTimeline';
+export { default as MemoryTheater } from './components/MemoryTheater';
 
-// Export MemoryTimeline component
-export const MemoryTimeline = MemoryTimelineComponent;
+// Export utility functions
+export * from './utils/emotionUtils';
 
-// Define types for communication logs
-export interface LogEntry {
-  id: string;
-  title: string;
-  preview: string;
-  timestamp: string;
-  type: 'operation' | 'sentinel' | 'poetry' | 'network';
-}
-
-export interface CommunicationLogs {
-  entries: LogEntry[];
-  totalCount: number;
-}
-
-// Default export
-export default MemoryTimelineComponent;
+// Default export the main component
+export { MemoryTheater as default } from './components/MemoryTheater';

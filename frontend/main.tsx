@@ -1,7 +1,7 @@
+import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-import { StrictMode } from 'react';
-import App from './App';
-import './styles/globals.css';
+import App from './src/App';
+import '@/styles/globals.css';
 
 // Find the root element, with error handling
 const rootElement = document.getElementById('root');

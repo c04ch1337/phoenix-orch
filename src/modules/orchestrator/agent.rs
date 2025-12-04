@@ -141,7 +141,11 @@ impl OrchestratorAgent {
         
         // Register default chat tool
         use crate::modules::orchestrator::tools::chat::ChatTool;
-        agent.add_tool("chat", ChatTool::new())?;
+        agent.add_tool("chat", ChatTool::new().map_err(|e| PhoenixError::Agent {
+            kind: AgentErrorKind::IOError,
+            message: format!("Failed to initialize ChatTool: {}", e),
+            component: "OrchestratorAgent".to_string(),
+        })?)?;
         
         Ok(agent)
     }

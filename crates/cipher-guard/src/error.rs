@@ -50,6 +50,30 @@ pub enum CipherGuardError {
 
     #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("Disk encryption error: {0}")]
+    DiskEncryptionError(String),
+
+    #[error("Command parsing error: {0}")]
+    CommandParsingError(String),
+
+    #[error("Conscience gate error: {0}")]
+    ConscienceGateError(String),
+
+    #[error("Unrecognized command: {0}")]
+    UnrecognizedCommand(String),
+
+    #[error("Repository not found: {0}")]
+    RepositoryNotFound(String),
+
+    #[error("Entry not found: {0}")]
+    EntryNotFound(String),
+
+    #[error("Invalid regex: {0}")]
+    InvalidRegex(String),
+
+    #[error("Knowledge base error: {0}")]
+    KnowledgeBaseError(String),
 }
 
 impl CipherGuardError {
@@ -81,6 +105,46 @@ impl CipherGuardError {
     /// Create a new integration error
     pub fn integration(msg: impl Into<String>) -> Self {
         Self::IntegrationError(msg.into())
+    }
+
+    /// Create a new disk encryption error
+    pub fn disk_encryption(msg: impl Into<String>) -> Self {
+        Self::DiskEncryptionError(msg.into())
+    }
+
+    /// Create a new command parsing error
+    pub fn command_parsing(msg: impl Into<String>) -> Self {
+        Self::CommandParsingError(msg.into())
+    }
+
+    /// Create a new conscience gate error
+    pub fn conscience_gate(msg: impl Into<String>) -> Self {
+        Self::ConscienceGateError(msg.into())
+    }
+
+    /// Create a new unrecognized command error
+    pub fn unrecognized_command(msg: impl Into<String>) -> Self {
+        Self::UnrecognizedCommand(msg.into())
+    }
+
+    /// Create a new repository not found error
+    pub fn repository_not_found(name: impl Into<String>) -> Self {
+        Self::RepositoryNotFound(name.into())
+    }
+
+    /// Create a new entry not found error
+    pub fn entry_not_found(id: impl Into<String>) -> Self {
+        Self::EntryNotFound(id.into())
+    }
+
+    /// Create a new invalid regex error
+    pub fn invalid_regex(msg: impl Into<String>) -> Self {
+        Self::InvalidRegex(msg.into())
+    }
+
+    /// Create a new knowledge base error
+    pub fn knowledge_base(msg: impl Into<String>) -> Self {
+        Self::KnowledgeBaseError(msg.into())
     }
 }
 

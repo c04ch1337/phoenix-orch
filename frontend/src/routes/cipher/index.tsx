@@ -7,8 +7,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePhoenixStore } from '@/stores/phoenixStore';
-import { getHealthStatus } from '@/tauri/invoke';
 import LoadingIndicator from '@/components/common/LoadingIndicator';
+
+// TODO: Implement getHealthStatus when Tauri commands are ready
+// import { getHealthStatus } from '@/tauri/invoke';
 
 // Placeholder component for security dashboard
 const SecurityDashboard = () => {
@@ -70,9 +72,10 @@ export default function CipherRoute() {
     // Simulate loading security data
     const fetchSecurityStatus = async () => {
       try {
-        // Check health to verify connection
-        const health = await getHealthStatus();
-        setConnectionStatus(health.status === 'ok');
+        // TODO: Check health to verify connection when Tauri commands are ready
+        // const health = await getHealthStatus();
+        // setConnectionStatus(health.status === 'ok');
+        setConnectionStatus(true); // Mock for now
         setLoading(false);
       } catch (error) {
         console.error('Failed to load security status:', error);

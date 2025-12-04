@@ -15,6 +15,14 @@ tracing = "0.1"
 futures = "0.3"
 async-trait = "0.1"
 anyhow = "1.0"
+regex = "1.9"          # For parsing natural language commands
+lazy_static = "1.4"    # For singleton pattern
+
+# Network scanning dependencies
+ipnetwork = "0.20"     # For CIDR parsing
+socket2 = "0.5"        # Low-level socket operations
+tokio-stream = "0.1"   # For async stream processing
+parking_lot = "0.12"   # For improved concurrency control
 
 # Phoenix ORCH dependencies
 phoenix-common = { path = "../../phoenix-kernel/phoenix-common" }

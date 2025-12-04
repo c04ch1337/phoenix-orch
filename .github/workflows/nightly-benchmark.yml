@@ -1,0 +1,337 @@
+name: Nightly Performance Benchmark
+
+on:
+  # Run at midnight UTC every day
+  schedule:
+    - cron: '0 0 * * *'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      skip_regression_check:
+        description: 'Skip regression check (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  benchmark:
+    name: Run benchmarks on ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: "MacBook Pro"
+            platform: "macbook"
+          - os: windows-latest 
+            name: "Windows 11"
+            platform: "windows"
+          - os: ubuntu-24.04
+            name: "Ubuntu Server"
+            platform: "ubuntu_server"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Get full history for regression comparison
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      # Install platform-specific dependencies
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install coreutils
+
+      # Download previous benchmark results if available
+      - name: Download previous benchmark results
+        uses: actions/download-artifact@v3
+        with:
+          name: benchmark-data-${{ matrix.platform }}
+          path: ./previous-benchmark
+        continue-on-error: true  # Continue if there's no previous benchmark
+
+      # Run the benchmarks
+      - name: Run benchmarks
+        id: run-benchmarks
+        shell: bash
+        run: |
+          chmod +x ./tests/benchmarks/run-benchmarks.sh
+          ./tests/benchmarks/run-benchmarks.sh --platform ${{ matrix.platform }} --generate-report
+
+      # Create benchmark results directory
+      - name: Create results directory
+        run: mkdir -p benchmark-results
+        shell: bash
+
+      # Find and copy benchmark results
+      - name: Gather benchmark results
+        id: gather-results
+        shell: bash
+        run: |
+          # On Windows, the desktop path needs special handling
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            DESKTOP_PATH="$USERPROFILE/Desktop"
+          else
+            DESKTOP_PATH="$HOME/Desktop"
+          fi
+
+          # Find the most recent benchmark directory
+          BENCHMARK_DIR=$(find "$DESKTOP_PATH" -name "phoenix-benchmarks-*" -type d -print | sort -r | head -n 1)
+          
+          if [ -n "$BENCHMARK_DIR" ]; then
+            echo "Found benchmark directory: $BENCHMARK_DIR"
+            cp -r "$BENCHMARK_DIR"/* benchmark-results/
+            echo "report_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No benchmark results found"
+            echo "report_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Compare with previous results to detect regressions
+      - name: Check for performance regressions
+        id: check-regression
+        if: steps.gather-results.outputs.report_exists == 'true'
+        shell: bash
+        run: |
+          # Initialize variables
+          REGRESSION_DETECTED=false
+          REGRESSION_DETAILS=""
+          
+          # Path to current benchmark report
+          CURRENT_REPORT="benchmark-results/phoenix_benchmark_report.txt"
+          
+          # Path to previous benchmark report (if it exists)
+          PREVIOUS_REPORT="./previous-benchmark/phoenix_benchmark_report.txt"
+          
+          if [ -f "$CURRENT_REPORT" ] && [ -f "$PREVIOUS_REPORT" ]; then
+            echo "Comparing current benchmark with previous benchmark..."
+            
+            # Define metrics to monitor
+            METRICS=(
+              "Cold start"
+              "Thought-to-action"
+              "Voice-to-action"
+              "Face auth"
+              "Vector KB search"
+              "Good night scene"
+              "Idle RAM"
+              "24h recording"
+            )
+            
+            # Process each metric
+            for metric in "${METRICS[@]}"; do
+              # Extract current value (numeric part only)
+              CURRENT_LINE=$(grep "$metric" "$CURRENT_REPORT" | head -n 1)
+              CURRENT_VALUE=$(echo "$CURRENT_LINE" | grep -o -E '[0-9]+(\.[0-9]+)?' | head -n 1)
+              
+              # Extract previous value (numeric part only)
+              PREVIOUS_LINE=$(grep "$metric" "$PREVIOUS_REPORT" | head -n 1)
+              PREVIOUS_VALUE=$(echo "$PREVIOUS_LINE" | grep -o -E '[0-9]+(\.[0-9]+)?' | head -n 1)
+              
+              # Extract the target value (numeric part only)
+              TARGET=$(echo "$CURRENT_LINE" | grep -o -E 'target < [0-9]+(\.[0-9]+)?' | grep -o -E '[0-9]+(\.[0-9]+)?')
+              
+              # If we have valid values, check for regression
+              if [ -n "$CURRENT_VALUE" ] && [ -n "$PREVIOUS_VALUE" ] && [ -n "$TARGET" ]; then
+                # Calculate percentage change
+                PERCENT_CHANGE=$(awk "BEGIN {print (($CURRENT_VALUE - $PREVIOUS_VALUE) / $PREVIOUS_VALUE) * 100}")
+                
+                # Round to 2 decimal places
+                PERCENT_CHANGE=$(awk "BEGIN {printf \"%.2f\", $PERCENT_CHANGE}")
+                
+                # Check if regression exceeds 5%
+                if (( $(echo "$PERCENT_CHANGE > 5.0" | bc -l) )); then
+                  REGRESSION_DETECTED=true
+                  REGRESSION_DETAILS+="$metric: Current=$CURRENT_VALUE, Previous=$PREVIOUS_VALUE, Target<$TARGET, Regression=$PERCENT_CHANGE%\n"
+                fi
+              fi
+            done
+            
+            # Output regression details
+            if [ "$REGRESSION_DETECTED" = true ]; then
+              echo -e "::error::PERFORMANCE REGRESSION DETECTED:\n$REGRESSION_DETAILS"
+              echo -e "$REGRESSION_DETAILS" > benchmark-results/regression-detected.txt
+              echo "regression=true" >> $GITHUB_OUTPUT
+              echo "details<<EOF" >> $GITHUB_OUTPUT
+              echo -e "$REGRESSION_DETAILS" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "No significant performance regressions detected."
+              echo "regression=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Cannot compare performance: missing current or previous benchmark report."
+            echo "regression=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Save benchmark results for future comparisons
+      - name: Upload benchmark data for future runs
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-data-${{ matrix.platform }}
+          path: benchmark-results/phoenix_benchmark_report.txt
+          retention-days: 30
+
+      # Upload full benchmark results
+      - name: Upload full benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results-${{ matrix.platform }}
+          path: benchmark-results/
+          retention-days: 30
+
+      # Fail the workflow if regression is detected
+      - name: Fail on regression
+        if: steps.check-regression.outputs.regression == 'true' && github.event.inputs.skip_regression_check != 'true'
+        run: |
+          echo "::error::Performance regression exceeding 5% threshold detected!"
+          echo "${{ steps.check-regression.outputs.details }}"
+          exit 1
+
+  # Generate a summary report from all platform results
+  summarize:
+    name: Generate Summary Report
+    needs: benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download all benchmark results
+      - name: Download all benchmark results
+        uses: actions/download-artifact@v3
+        with:
+          path: all-benchmark-results
+
+      # Generate HTML report
+      - name: Generate HTML Report
+        run: |
+          mkdir -p summary-report
+          
+          # Create HTML report header
+          cat > summary-report/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Phoenix Orch Performance Benchmark Results</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              h1 { color: #333; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+              tr:nth-child(even) { background-color: #f2f2f2; }
+              .pass { color: green; font-weight: bold; }
+              .fail { color: red; font-weight: bold; }
+              .regression { background-color: #ffdddd; }
+              .summary { margin-top: 20px; padding: 10px; background-color: #f0f0f0; }
+            </style>
+          </head>
+          <body>
+            <h1>Phoenix Orch Performance Benchmark Results</h1>
+            <p>Run Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')</p>
+            
+            <table>
+              <tr>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Key Metrics</th>
+              </tr>
+          EOF
+          
+          # Process each platform's results
+          for platform_dir in all-benchmark-results/benchmark-results-*; do
+            if [ -d "$platform_dir" ]; then
+              platform=$(basename "$platform_dir" | sed 's/benchmark-results-//')
+              
+              # Determine if regression was detected
+              if [ -f "$platform_dir/regression-detected.txt" ]; then
+                status="<span class='fail'>FAILED</span>"
+                regression_details=$(cat "$platform_dir/regression-detected.txt")
+              else
+                status="<span class='pass'>PASSED</span>"
+                regression_details=""
+              fi
+              
+              # Extract key metrics
+              metrics=""
+              if [ -f "$platform_dir/phoenix_benchmark_report.txt" ]; then
+                report_content=$(cat "$platform_dir/phoenix_benchmark_report.txt")
+                
+                # Extract overall grade
+                grade=$(echo "$report_content" | grep "Overall grade" | awk -F':' '{print $2}' | xargs)
+                if [ -n "$grade" ]; then
+                  metrics="<strong>Grade: $grade</strong><br>"
+                fi
+                
+                # Extract some key metrics
+                cold_start=$(echo "$report_content" | grep "Cold start" | head -n 1)
+                if [ -n "$cold_start" ]; then
+                  metrics+="$cold_start<br>"
+                fi
+                
+                vector_kb=$(echo "$report_content" | grep "Vector KB search" | head -n 1)
+                if [ -n "$vector_kb" ]; then
+                  metrics+="$vector_kb<br>"
+                fi
+                
+                # Add regression details if any
+                if [ -n "$regression_details" ]; then
+                  metrics+="<div class='regression'><strong>REGRESSIONS:</strong><br>"
+                  metrics+=$(echo "$regression_details" | sed 's/$/<br>/g')
+                  metrics+="</div>"
+                fi
+              else
+                metrics="<em>No metrics available</em>"
+              fi
+              
+              # Add row to HTML table
+              cat >> summary-report/index.html << EOF
+              <tr>
+                <td>$platform</td>
+                <td>$status</td>
+                <td>$metrics</td>
+              </tr>
+          EOF
+            fi
+          done
+          
+          # Complete HTML report
+          cat >> summary-report/index.html << EOF
+            </table>
+            
+            <div class="summary">
+              <h2>Summary</h2>
+              <p>Performance benchmark runs completed. Any regressions exceeding 5% threshold are highlighted.</p>
+              <p><strong>Phoenix Orch Performance Standards for Mars habitats:</strong><br>
+              No regressions greater than 5%. Ever.<br>
+              Execute immediately.</p>
+            </div>
+          </body>
+          </html>
+          EOF
+          
+          echo "HTML report generated at summary-report/index.html"
+        shell: bash
+
+      # Upload HTML report as artifact
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-summary-html
+          path: summary-report/
+          retention-days: 30
