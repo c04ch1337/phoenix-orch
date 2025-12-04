@@ -98,7 +98,7 @@ Core configuration files:
 ### Monitoring
 
 The system includes comprehensive monitoring:
-- Grafana dashboards at http://localhost:3000
+- Grafana dashboards at http://localhost:5000
 - Prometheus metrics at http://localhost:9097
 - AlertManager at http://localhost:9093
 
