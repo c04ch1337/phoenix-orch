@@ -51,7 +51,7 @@ Development Tools:
 #### Network Requirements
 ```
 Required Ports:
-- 3000: Web Interface
+- 5000: Web Interface
 - 5432: PostgreSQL
 - 5672: RabbitMQ
 - 9200: Elasticsearch
