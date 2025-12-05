@@ -1,0 +1,251 @@
+/**
+ * Accessibility Styles
+ * WCAG 2.2 AA compliant styles for the Phoenix Orch application
+ */
+
+:root {
+  /* Base colors with proper contrast ratios (4.5:1 minimum for normal text) */
+  --phoenix-orange: #F77F00;
+  --phoenix-orange-light: #FF9E2C; /* For dark backgrounds */
+  --phoenix-orange-dark: #C65200;  /* For light backgrounds */
+  
+  --phoenix-cyan: #00CED1; 
+  --phoenix-cyan-light: #40E0E5; /* For dark backgrounds */
+  --phoenix-cyan-dark: #008B8B; /* For light backgrounds */
+  
+  --text-on-dark: #FFFFFF;      /* Contrast ratio > 16:1 on black */
+  --text-muted-on-dark: #BBBBBB; /* Contrast ratio > 7:1 on black */
+  
+  --text-on-light: #0A0A0A;     /* Contrast ratio > 16:1 on white */
+  --text-muted-on-light: #525252; /* Contrast ratio > 7:1 on white */
+  
+  --focus-ring-color: var(--phoenix-orange);
+  --focus-ring-width: 3px;
+  
+  /* Animations and transitions */
+  --standard-transition: 0.2s ease-in-out;
+  --reduced-transition: 0.05s linear;
+}
+
+/* Dark mode color adjustments */
+.dark-mode {
+  --focus-ring-color: var(--phoenix-orange-light);
+}
+
+/* High contrast mode */
+.high-contrast {
+  --phoenix-orange: #FF8C00; /* Darker orange with higher contrast */
+  --phoenix-orange-light: #FFA500;
+  --phoenix-orange-dark: #D65B00;
+  
+  --phoenix-cyan: #00FFFF; /* Brighter cyan with higher contrast */
+  --phoenix-cyan-light: #40FFFF;
+  --phoenix-cyan-dark: #00AEAE;
+  
+  --text-on-dark: #FFFFFF; /* Pure white on dark backgrounds */
+  --text-muted-on-dark: #E0E0E0; /* Light gray on dark backgrounds */
+  
+  --text-on-light: #000000; /* Pure black on light backgrounds */
+  --text-muted-on-light: #333333; /* Dark gray on light backgrounds */
+  
+  --focus-ring-width: 4px; /* Wider focus rings */
+}
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  z-index: 9999;
+  padding: 1rem;
+  background: var(--phoenix-orange);
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  transition: none; /* No transition for accessibility purposes */
+}
+
+.skip-to-content:focus {
+  top: 0;
+  left: 0;
+  outline: none;
+}
+
+/* Focus indicators */
+.keyboard-mode *:focus,
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.3);
+}
+
+/* Remove outline for non-keyboard focus */
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Manually enabled reduced motion */
+.reduced-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Alternative static indicators for animations when reduced motion is enabled */
+.reduced-motion .animate-pulse,
+.reduced-motion .animate-bounce,
+.reduced-motion .animate-spin {
+  animation: none !important;
+}
+
+.reduced-motion .animate-pulse {
+  opacity: 0.7; /* Static alternative to pulsing */
+}
+
+.reduced-motion .animate-bounce {
+  border-bottom: 4px solid var(--phoenix-orange); /* Static alternative to bouncing */
+}
+
+.reduced-motion .animate-spin {
+  border: 4px dotted var(--phoenix-orange); /* Static alternative to spinning */
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Additional context for screen reader users when enabled */
+.sr-hints .sr-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Form element styling with accessibility in mind */
+input, 
+select, 
+textarea {
+  padding: 0.5rem;
+  border: 2px solid #6b7280;
+  border-radius: 0.25rem;
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Focus state for form controls */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--focus-ring-color);
+  box-shadow: 0 0 0 3px rgba(247, 127, 0, 0.3);
+  outline: none;
+}
+
+/* Error state for form controls */
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+/* Error message styling */
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Links with proper focus state */
+a {
+  color: var(--phoenix-orange);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--phoenix-orange-light);
+}
+
+a:focus {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Status messages with proper ARIA roles */
+.status-message {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.status-message.info {
+  background-color: rgba(0, 206, 209, 0.1);
+  border-left: 4px solid var(--phoenix-cyan);
+}
+
+.status-message.success {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-left: 4px solid #22c55e;
+}
+
+.status-message.warning {
+  background-color: rgba(247, 127, 0, 0.1);
+  border-left: 4px solid var(--phoenix-orange);
+}
+
+.status-message.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
+}
+
+/* High contrast mode status message adjustments */
+.high-contrast .status-message {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.high-contrast .status-message.info {
+  border-color: var(--phoenix-cyan);
+  background-color: transparent;
+}
+
+.high-contrast .status-message.success {
+  border-color: #22c55e;
+  background-color: transparent;
+}
+
+.high-contrast .status-message.warning {
+  border-color: var(--phoenix-orange);
+  background-color: transparent;
+}
+
+.high-contrast .status-message.error {
+  border-color: #ef4444;
+  background-color: transparent;
+}

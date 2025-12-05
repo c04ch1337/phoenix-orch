@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { useRouteError } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -6,28 +7,50 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(_: Error): State {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true };
+/**
+ * ErrorBoundary component for catching and displaying errors
+ */
+class ErrorBoundaryClass extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+  static getDerivedStateFromError(error: Error): State {
+    return {
+      hasError: true,
+      error,
+      errorInfo: null
+    };
   }
 
-  public render() {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.setState({
+      error,
+      errorInfo
+    });
+  }
+
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="p-8 bg-red-900 text-white">
-          <h2 className="text-xl mb-4">Something went wrong.</h2>
-          <p>Please try again or contact support if the problem persists.</p>
+        <div className="error-container">
+          <h1>Something went wrong</h1>
+          <p>{this.state.error?.toString()}</p>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.stack}
+            <br />
+            {this.state.errorInfo?.componentStack}
+          </details>
         </div>
       );
     }
@@ -36,4 +59,30 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+/**
+ * Error boundary wrapper that can be used directly in components
+ */
+export default function ErrorBoundary(props: Props): JSX.Element {
+  return <ErrorBoundaryClass {...props} />;
+}
+
+/**
+ * Error boundary component that can be used as errorElement in React Router v6.4+
+ */
+export function RouterErrorBoundary(): JSX.Element {
+  const error = useRouteError();
+  
+  return (
+    <div className="error-container">
+      <h1>Oops! Something went wrong</h1>
+      <p>
+        {error instanceof Error ? error.message : 'An unexpected error occurred'}
+      </p>
+      {error instanceof Error && (
+        <details style={{ whiteSpace: 'pre-wrap' }}>
+          {error.stack}
+        </details>
+      )}
+    </div>
+  );
+}

@@ -1,3 +1,6 @@
+/* Import Phoenix Navigation styling */
+@import './src/styles/phoenix-nav.css';
+
 * {
   margin: 0;
   padding: 0;

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SplashPage Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    // Import React dependencies
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import { AnimatePresence } from 'framer-motion';
+    
+    // Import the SplashPage component
+    import SplashPage from './src/components/SplashPage';
+    
+    // Create a simple App component to test the splash screen
+    const App = () => {
+      const [showSplash, setShowSplash] = React.useState(true);
+      
+      const handleSplashComplete = () => {
+        console.log("Splash completed!");
+        setShowSplash(false);
+      };
+      
+      return (
+        <React.StrictMode>
+          <AnimatePresence mode="wait">
+            {showSplash ? (
+              <SplashPage 
+                key="splash"
+                onComplete={handleSplashComplete} 
+                onSkip={handleSplashComplete}
+                duration={2800} // Exactly 2.8 seconds as required
+              />
+            ) : (
+              <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+                <h1>Phoenix Orchestrator</h1>
+                <p>This is a test page to verify the SplashPage component works correctly.</p>
+                <button onClick={() => setShowSplash(true)}>
+                  Show Splash Screen Again
+                </button>
+              </div>
+            )}
+          </AnimatePresence>
+        </React.StrictMode>
+      );
+    };
+    
+    // Render the test App
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

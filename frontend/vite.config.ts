@@ -34,11 +34,11 @@ export default defineConfig(({ mode }) => {
     }
   },
   server: {
-    port: Number(env.FRONTEND_DEV_PORT) || 5000,
+    port: 5000,
     strictPort: true,
     proxy: {
       '/api/sse': {
-        target: `http://127.0.0.1:${env.BACKEND_PORT || 5001}`,
+        target: 'http://127.0.0.1:5001',
         changeOrigin: true,
         secure: false
       }

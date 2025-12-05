@@ -8,17 +8,58 @@
     <meta name="description" content="Phoenix ORCH - The Ashen Guard Edition" />
     <title>Phoenix ORCH</title>
 
-    <!-- Fonts -->
+    <!-- Performance Optimized Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Only load essential font weights to improve performance -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <!-- Fallback for font loading -->
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    </noscript>
+    <!-- Load other fonts asynchronously -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- PWA Setup -->
+    <!-- PWA Setup with Preloading -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="https://api.iconify.design/lucide:flame.svg?color=%23e63946" />
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/main.tsx" as="script">
+    <link rel="preload" href="/style.css" as="style">
+    <link rel="preload" href="/src/components/layout/MainLayout.tsx" as="script">
+    <link rel="preload" href="/components/SplashPage.tsx" as="script">
 
-    <!-- Base Styles -->
-    <link rel="stylesheet" href="/style.css">
+    <!-- Critical CSS Inline -->
+    <style>
+      /* Critical rendering path CSS */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0a0a0a;
+        color: #ffffff;
+        font-family: 'Inter', sans-serif;
+      }
+      
+      /* Ensure text is visible during font loading */
+      html {
+        font-display: swap;
+      }
+      
+      /* Optimize startup rendering */
+      .splash-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+    </style>
+    
+    <!-- Base Styles (non-blocking) -->
+    <link rel="stylesheet" href="/style.css" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="/style.css">
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

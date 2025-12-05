@@ -1,11 +1,11 @@
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  testDir: './tests/e2e',
+  testDir: './tests/playwright',
   timeout: 30000,
   retries: 2,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -25,7 +25,7 @@ const config: PlaywrightTestConfig = {
   ],
   webServer: {
     command: 'npm run dev',
-    port: 5173,
+    port: 5000,
     reuseExistingServer: !process.env.CI,
   },
   reporter: [
